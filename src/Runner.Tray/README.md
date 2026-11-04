@@ -48,14 +48,13 @@ The switches are in `%LOCALAPPDATA%\Runner\switches.json`. "Off" pauses the work
 |---|---|---|
 | Listener | The socket closes and does not connect again. The catch-up does not run. The dispatcher runs no handlers. Events wait in the inbox. | The socket connects. The catch-up runs. |
 | Source | Its events stay pending in the local store. No run, no ack. | The pending events run. |
-| Handler | It does not run. An event that waits for it stays pending in the local store, not acked. Other handlers of the event run. | The handler runs for the waiting events. Then the event is acked. |
+| Handler | It is skipped. The other handlers of the event run, and the event is acked. | The handler runs for new events. It does not run for the events that it skipped. |
 
 Defaults: listener on, all sources on, all handlers on, except `NotionPageUpdated` off.
 
 - The settings of the environment also apply. For example, `NotionPageUpdated` starts Claude only if `Handlers:NotionPageUpdated:Enabled` is true.
 - If the listener is off, the ack service still acks the events that are finished.
-- A permanent failure of one handler fails the event and acks it, also if another matching handler is off.
-- The inbox deletes events after 7 days. A paused event stays in the local store.
+- The inbox deletes events after 7 days. An event that waits for a source or for the listener stays in the local store.
 
 ## Traffic
 

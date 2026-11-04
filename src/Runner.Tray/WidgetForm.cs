@@ -79,6 +79,9 @@ internal sealed class WidgetForm : Form
     }
 
     /// <summary>Shows the widget. The first time, it goes to the bottom right of the work area.</summary>
+    /// <summary>Shows the Traffic tab (used by the self-test).</summary>
+    public void ShowTrafficTab() => ShowTab(activity: false);
+
     public void ShowWidget()
     {
         if (!_placed)
@@ -128,7 +131,7 @@ internal sealed class WidgetForm : Form
         item.SubItems.Add(t.Target);
         item.SubItems.Add(t.Status);
         item.SubItems.Add(t.Size is { } s ? FormatSize(s) : "");
-        item.SubItems.Add(t.Duration is { } d ? $"{d.TotalMilliseconds:0} ms" : "");
+        item.SubItems.Add(t.Duration is { } d ? $"{d.TotalMilliseconds:0}" : "");
         _traffic.BeginUpdate();
         _traffic.Items.Insert(0, item);
         while (_traffic.Items.Count > TrafficLog.Capacity) _traffic.Items.RemoveAt(_traffic.Items.Count - 1);
@@ -176,18 +179,21 @@ internal sealed class WidgetForm : Form
             Size = new Size(26, 26),
             TextAlign = ContentAlignment.MiddleCenter,
             Cursor = Cursors.Hand,
-            Anchor = AnchorStyles.Top | AnchorStyles.Right,
-            Location = new Point(378 - 8 - 26, 10),
         };
         close.Click += (_, _) => Hide();
         close.MouseEnter += (_, _) => close.ForeColor = Theme.Text;
         close.MouseLeave += (_, _) => close.ForeColor = Theme.Muted;
 
-        _listener.Location = new Point(close.Left - 6 - _listener.Width, 14);
-        _listener.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         _listener.Toggled += (_, _) => ListenerToggled?.Invoke(_listener.Checked);
-        var label = new Label { Text = "Listener", ForeColor = Theme.Text, AutoSize = true, Anchor = AnchorStyles.Top | AnchorStyles.Right };
-        label.Location = new Point(_listener.Left - 6 - TextRenderer.MeasureText(label.Text, Theme.Body).Width, 15);
+        var label = new Label { Text = "Listener", ForeColor = Theme.Text, AutoSize = true };
+
+        // Place the right-side controls from the final header width, so that they stay visible at each display scale.
+        header.Layout += (_, _) =>
+        {
+            close.Location = new Point(header.ClientSize.Width - 8 - close.Width, (header.Height - close.Height) / 2);
+            _listener.Location = new Point(close.Left - 6 - _listener.Width, (header.Height - _listener.Height) / 2);
+            label.Location = new Point(_listener.Left - 6 - label.Width, (header.Height - label.Height) / 2);
+        };
 
         header.Controls.AddRange([_dot, name, _status, label, _listener, close]);
         foreach (Control c in new Control[] { header, _dot, name, _status, label }) EnableDrag(c);
@@ -262,9 +268,9 @@ internal sealed class WidgetForm : Form
         _activity.BackColor = Theme.Back;
         _activity.ForeColor = Theme.Text;
         _activity.Font = Theme.Mono;
-        _activity.WordWrap = false;
+        _activity.WordWrap = true;
         _activity.DetectUrls = false;
-        _activity.ScrollBars = RichTextBoxScrollBars.Both;
+        _activity.ScrollBars = RichTextBoxScrollBars.Vertical;
 
         _traffic.Dock = DockStyle.Fill;
         _traffic.View = View.Details;
@@ -284,9 +290,11 @@ internal sealed class WidgetForm : Form
         };
         _traffic.DrawItem += (_, e) => e.DrawDefault = true;
         _traffic.DrawSubItem += (_, e) => e.DrawDefault = true;
-        foreach (var (title, width) in new[] { ("Time", 56), ("Dir", 30), ("Kind", 52), ("Target", 112), ("Status", 48), ("Size", 48), ("Duration", 56) })
+        // Column widths are in pixels, so scale them for the display.
+        var scale = DeviceDpi / 96f;
+        foreach (var (title, width) in new[] { ("Time", 60), ("Dir", 30), ("Kind", 46), ("Target", 104), ("Status", 44), ("Size", 42), ("ms", 40) })
         {
-            _traffic.Columns.Add(title, width);
+            _traffic.Columns.Add(title, (int)(width * scale));
         }
 
         content.Controls.AddRange([_activity, _traffic]);

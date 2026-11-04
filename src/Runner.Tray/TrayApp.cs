@@ -26,7 +26,7 @@ internal sealed class TrayApp : ApplicationContext
     private string? _startError;
     private bool _exiting;
 
-    public TrayApp(IHost host, ActivityFeed feed)
+    public TrayApp(IHost host, ActivityFeed feed, bool mock = false, bool selfTest = false)
     {
         _host = host;
         var services = host.Services;
@@ -55,6 +55,12 @@ internal sealed class TrayApp : ApplicationContext
         var menu = new ContextMenuStrip();
         menu.Items.Add(new ToolStripMenuItem("Show", null, (_, _) => _form.ShowWidget()));
         menu.Items.Add(_listenerItem);
+        if (mock && services.GetService<MockEvents>() is { } events)
+        {
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new ToolStripMenuItem("Send mock task event", null, (_, _) => events.SendTaskEvent()));
+            menu.Items.Add(new ToolStripMenuItem("Send mock GitHub event", null, (_, _) => events.SendGitHubEvent()));
+        }
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, async (_, _) => await ExitAsync()));
         _tray = new NotifyIcon { ContextMenuStrip = menu, Visible = true };
@@ -79,7 +85,10 @@ internal sealed class TrayApp : ApplicationContext
 
         UpdateState();
         _form.ShowWidget();
-        _ = StartAsync();
+        _ = StartAsync().ContinueWith(_ => Post(() =>
+        {
+            if (selfTest) _ = mock ? new SelfTest(_form, services, ExitAsync).RunAsync() : new SelfTest(_form, services, ExitAsync).RunRealAsync();
+        }));
     }
 
     private ListenerState Current =>

@@ -21,6 +21,9 @@ internal static class Program
     private static int Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        // --mock: no network and no claude process (MockMode). --paused: start with the listener off.
+        var mock = args.Contains("--mock");
+        var paused = mock || args.Contains("--paused") || args.Contains("--selftest");
 
         var feed = new ActivityFeed();
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
@@ -30,18 +33,22 @@ internal static class Program
         });
         builder.Configuration.AddUserSecrets(HostUserSecretsId);
         builder.Configuration.AddInboxTokenVariable();
+        if (mock) MockMode.Configure(builder.Configuration);
         builder.Logging.AddProvider(new ActivityLoggerProvider(feed));
 
         // Registered before AddRunnerHost, so these replace the console defaults.
-        builder.Services.AddSingleton(RunnerSwitches.Load(RunnerSwitches.DefaultPath));
+        var switches = RunnerSwitches.Load(mock ? Path.Combine(MockMode.Folder, "switches.json") : RunnerSwitches.DefaultPath);
+        if (paused) switches.SetListener(false);
+        builder.Services.AddSingleton(switches);
         builder.Services.AddSingleton<IActivitySink>(feed);
 
         builder.Services.AddRunnerHost(builder.Configuration);
         builder.Services.AddHandlers(builder.Configuration);
         builder.Services.AddHandlerAssembly(typeof(HandlersServiceCollectionExtensions).Assembly);
+        if (mock) MockMode.AddMocks(builder.Services);
 
         using var host = builder.Build();
-        using var app = new TrayApp(host, feed);
+        using var app = new TrayApp(host, feed, mock, args.Contains("--selftest"));
         Application.Run(app);
         return 0;
     }
