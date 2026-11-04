@@ -16,6 +16,15 @@ inbox (Cloudflare) ──WebSocket push──► Runner.Host ──► your IEve
 
 The contracts between the parts are in [CONTRACTS.md](CONTRACTS.md).
 
+## Run the runner in a window
+
+```powershell
+.\host.ps1           # receives inbox events and logs them; no handler starts Claude
+.\host.ps1 -Claude   # also turns on the handlers that start Claude sessions
+```
+
+Stop it with Ctrl+C.
+
 ## Run the Notion tasks yourself
 
 ```powershell
