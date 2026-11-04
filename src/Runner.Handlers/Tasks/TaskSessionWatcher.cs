@@ -23,7 +23,7 @@ public sealed class TaskSessionWatcher(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_options.Enabled) return;
+        if (!_options.Enabled || _options.Mode != TaskRunMode.Background) return;
         while (!stoppingToken.IsCancellationRequested)
         {
             try

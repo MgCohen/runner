@@ -8,9 +8,10 @@ using Runner.Handlers.Notion;
 namespace Runner.Handlers.Tasks;
 
 /// <summary>
-/// Starts a Claude session when a task in the Tasks database gets the status Todo.
-/// It sets the status In Progress, starts a background Remote Control session and records the task in
-/// <see cref="TaskStore"/>. <see cref="TaskSessionWatcher"/> moves the task to In Review when the session finishes.
+/// Starts Claude when a task in the Tasks database gets the status Todo, and sets In Progress.
+/// In <see cref="TaskRunMode.Print"/> (default) it runs <c>claude -p</c> in the runner window, then sets In Review.
+/// In <see cref="TaskRunMode.Background"/> it starts a Remote Control session and records it in <see cref="TaskStore"/>;
+/// <see cref="TaskSessionWatcher"/> then sets In Review.
 /// </summary>
 /// <remarks>
 /// A Notion event does not give the previous status. Each change to Todo starts a session, also from In Review.
@@ -21,6 +22,7 @@ namespace Runner.Handlers.Tasks;
 public sealed class TaskTodoStarted(
     INotionClient notion,
     IClaudeLauncher claude,
+    IClaudePrint print,
     IClaudeAgents agents,
     TaskStore store,
     PageCooldown cooldown,
@@ -61,14 +63,22 @@ public sealed class TaskTodoStarted(
             ["Result"] = NotionProperties.Text(""),
         }, ct);
 
+        var folder = page.TextOf(_options.FolderProperty);
+        var workingDirectory = string.IsNullOrWhiteSpace(folder)
+            ? _options.WorkingDirectory ?? claudeOptions.Value.WorkingDirectory
+            : folder;
+
+        if (_options.Mode == TaskRunMode.Print)
+        {
+            await RunPrintAsync(page, workingDirectory, log, ct);
+            return;
+        }
+
         ClaudeSession session;
         try
         {
             var markdown = await notion.GetPageMarkdownAsync(pageId, ct);
-            var folder = page.TextOf(_options.FolderProperty);
-            var request = new ClaudeRequest(BuildPrompt(page, markdown),
-                string.IsNullOrWhiteSpace(folder) ? _options.WorkingDirectory ?? claudeOptions.Value.WorkingDirectory : folder,
-                SessionName(page));
+            var request = new ClaudeRequest(BuildPrompt(page, markdown), workingDirectory, SessionName(page));
             session = await claude.StartRemoteSessionAsync(request, ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -90,6 +100,42 @@ public sealed class TaskTodoStarted(
         }
         log.LogInformation("Task {PageId} ({Title}): session {SessionId} started. Link: {Link}",
             pageId, page.Title, session.SessionId, link ?? "not yet");
+    }
+
+    /// <summary>Runs <c>claude -p</c> in the runner window, then sets In Review with the answer, or Backlog on a failure.</summary>
+    private async Task RunPrintAsync(NotionPage page, string? workingDirectory, ILogger log, CancellationToken ct)
+    {
+        var key = "task:" + NotionWebhook.NormalizeId(page.Id);
+        log.LogInformation("Task '{Title}': {Status}. Claude runs in this window.", page.Title, _options.RunningStatus);
+        ClaudeOutput result;
+        try
+        {
+            var markdown = await notion.GetPageMarkdownAsync(page.Id, ct);
+            result = await print.RunAsync(BuildPrompt(page, markdown), workingDirectory, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            result = new ClaudeOutput(-1, ex.Message);
+        }
+        cooldown.Release(key);
+
+        if (result.ExitCode != 0)
+        {
+            await notion.UpdatePageAsync(page.Id, new JsonObject
+            {
+                [_options.StatusProperty] = NotionProperties.Status(_options.FailedStatus),
+                ["Result"] = NotionProperties.Text($"Claude failed (exit {result.ExitCode}): {result.Text}".Trim()),
+            }, ct);
+            throw new PermanentFailureException($"Task {page.Id}: claude -p exited with code {result.ExitCode}.");
+        }
+
+        await notion.UpdatePageAsync(page.Id, new JsonObject
+        {
+            [_options.StatusProperty] = NotionProperties.Status(_options.ReviewStatus),
+            ["Finished"] = NotionProperties.Date(time.GetUtcNow()),
+            ["Result"] = NotionProperties.Text(result.Text.Trim()),
+        }, ct);
+        log.LogInformation("Task '{Title}': {Status}.", page.Title, _options.ReviewStatus);
     }
 
     private bool IsTask(NotionPage page)
