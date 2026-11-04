@@ -22,8 +22,7 @@ public sealed partial class ClaudeLauncher(IOptions<ClaudeOptions> options, ILog
     public async Task<ClaudeSession> StartRemoteSessionAsync(ClaudeRequest request, CancellationToken cancellationToken)
     {
         var name = request.Name ?? $"{_options.SessionNamePrefix}-{DateTimeOffset.Now:yyyyMMdd-HHmmss}";
-        var sessionId = Guid.NewGuid().ToString();
-        var result = await RunAsync(BackgroundArguments(_options, name, sessionId, request.Prompt), request,
+        var result = await RunAsync(BackgroundArguments(_options, name, request.Prompt), request,
             null, _options.BackgroundStartTimeout, cancellationToken);
 
         if (!result.Succeeded)
@@ -32,9 +31,9 @@ public sealed partial class ClaudeLauncher(IOptions<ClaudeOptions> options, ILog
                 $"claude --bg exited with code {result.ExitCode}: {result.Error.Trim()} {result.Output.Trim()}");
         }
 
-        // claude --bg prints the session ID. If the output has no UUID, use the ID from --session-id.
-        var printed = UuidPattern().Match(result.Output);
-        var id = printed.Success ? printed.Value : sessionId;
+        // claude --bg prints "backgrounded · <id>". It sets the session ID itself.
+        var id = ParseBackgroundId(result.Output)
+            ?? throw new InvalidOperationException($"claude --bg printed no session ID: {result.Output.Trim()}");
         logger.LogInformation("Started background Claude session {SessionId} ({Name})", id, name);
         return new ClaudeSession(id, name, result.Output);
     }
@@ -48,10 +47,15 @@ public sealed partial class ClaudeLauncher(IOptions<ClaudeOptions> options, ILog
     /// The name follows <c>--remote-control</c>, because that option takes an optional value.
     /// <c>--</c> ends the options, so a prompt that starts with a dash stays a prompt.
     /// </remarks>
-    internal static IReadOnlyList<string> BackgroundArguments(
-        ClaudeOptions options, string name, string sessionId, string prompt) =>
-        ["--bg", "--remote-control", name, "--permission-mode", CheckedMode(options),
-         "--session-id", sessionId, "--", prompt];
+    internal static IReadOnlyList<string> BackgroundArguments(ClaudeOptions options, string name, string prompt) =>
+        ["--bg", "--remote-control", name, "-n", name, "--permission-mode", CheckedMode(options), "--", prompt];
+
+    /// <summary>Returns the short session ID from the output of <c>claude --bg</c>, or null.</summary>
+    internal static string? ParseBackgroundId(string output)
+    {
+        var match = BackgroundIdPattern().Match(output);
+        return match.Success ? match.Groups[1].Value : null;
+    }
 
     private static string CheckedMode(ClaudeOptions options) =>
         ClaudeOptions.AllowedPermissionModes.Contains(options.PermissionMode)
@@ -107,6 +111,6 @@ public sealed partial class ClaudeLauncher(IOptions<ClaudeOptions> options, ILog
         return new ClaudeRunResult(process.ExitCode, await output, await error);
     }
 
-    [GeneratedRegex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")]
-    private static partial Regex UuidPattern();
+    [GeneratedRegex(@"backgrounded\s*·\s*([0-9a-f]+)")]
+    private static partial Regex BackgroundIdPattern();
 }
