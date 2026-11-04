@@ -12,6 +12,7 @@ inbox (Cloudflare) ──WebSocket push──► Runner.Host ──► your IEve
 | `src/Runner.Abstractions` | Shared types: `InboxEvent`, `IEventHandler`, `[On]`, `HandlerContext` |
 | `src/Runner.Host` | The connector. One instance on each machine. |
 | `src/Runner.Handlers` | Your business logic |
+| `src/Runner.Tray` | Windows tray app. It runs the runner in its own process, with switches and a traffic view. Start it with `tray.ps1`. See [its README](src/Runner.Tray/README.md). |
 | `src/Runner.Cli` | `runner tasks`: runs the Notion Todo tasks in your terminal. Start it with `tasks.ps1`. |
 
 The contracts between the parts are in [CONTRACTS.md](CONTRACTS.md).
@@ -24,6 +25,8 @@ The contracts between the parts are in [CONTRACTS.md](CONTRACTS.md).
 ```
 
 Stop it with Ctrl+C.
+
+To run the runner in a tray app with switches for the listener, sources and handlers, use `.	ray.ps1` ([Runner.Tray](src/Runner.Tray/README.md)).
 
 ## Run the Notion tasks yourself
 

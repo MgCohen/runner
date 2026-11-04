@@ -22,6 +22,22 @@ flowchart LR
 | Dispatcher | Runs the matching handlers, oldest `id` first. |
 | Ack service | Acks done and failed events. If the call fails, it tries again later. |
 
+## Switches
+
+`RunnerSwitches` pauses the work. The console host uses switches that are all on and not saved. The tray app saves them in `%LOCALAPPDATA%\Runner\switches.json` ([Runner.Tray](../Runner.Tray/README.md)).
+
+| Switch off | Socket | Catch-up | Dispatcher |
+|---|---|---|---|
+| Listener | Closed, no reconnect | Does not run | Runs no handlers |
+| Source | No effect | No effect | Its events stay pending, not acked |
+| Handler | No effect | No effect | The handler does not run. The event stays pending, not acked. |
+
+The dispatcher skips a waiting event and does not wake for it. A switch change wakes the dispatcher.
+
+## Traffic log
+
+`TrafficLog` keeps the last 500 network items in memory. `TrafficHandler` is on each `HttpClient` from `IHttpClientFactory`: it records method, host, path, status, response size and duration. `SocketListener` records connect, close and each received message (kind, event id, size). The log has no headers, tokens, query strings or bodies.
+
 ## Handler results
 
 | Result | Connector action |

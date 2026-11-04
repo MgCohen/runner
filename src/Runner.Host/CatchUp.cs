@@ -5,19 +5,27 @@ namespace Runner.Host;
 /// <summary>
 /// Reads all pending events from the inbox and stores the unknown ones.
 /// The live push is at most once, so this is the safety net (contract A).
+/// If the listener is off, the catch-up does not run.
 /// </summary>
 public sealed class CatchUp(
     InboxClient client,
     EventStore store,
     DispatchSignal dispatch,
+    RunnerSwitches switches,
     IOptions<InboxOptions> options,
     ILogger<CatchUp> logger)
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    /// <summary>Returns the number of events that the store did not have.</summary>
+    /// <summary>Returns the number of events that the store did not have. Returns 0 if the listener is off.</summary>
     public async Task<int> RunAsync(string reason, CancellationToken cancellationToken)
     {
+        if (!switches.ListenerEnabled)
+        {
+            logger.LogInformation("Catch-up ({Reason}) does not run: the listener is off", reason);
+            return 0;
+        }
+
         await _gate.WaitAsync(cancellationToken);
         try
         {

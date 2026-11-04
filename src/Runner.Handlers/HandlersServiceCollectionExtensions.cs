@@ -15,6 +15,7 @@ public static class HandlersServiceCollectionExtensions
     public static IServiceCollection AddHandlers(this IServiceCollection services, IConfiguration configuration)
     {
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<IActivitySink, ConsoleActivitySink>();
 
         services.AddOptions<NotionOptions>()
             .Bind(configuration.GetSection(NotionOptions.Section))

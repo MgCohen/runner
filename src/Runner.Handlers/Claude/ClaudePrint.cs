@@ -1,21 +1,23 @@
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Runner.Abstractions;
 using Runner.Handlers.Tasks;
 
 namespace Runner.Handlers.Claude;
 
-/// <summary>Runs <c>claude -p</c> in the console of the current process and returns its answer.</summary>
+/// <summary>Runs <c>claude -p</c> and returns its answer. Each line of the answer goes to the activity sink.</summary>
 public interface IClaudePrint
 {
     Task<ClaudeOutput> RunAsync(string prompt, string? workingDirectory, CancellationToken cancellationToken);
 }
 
 /// <summary>
-/// Runs <c>claude -p</c> as a child of the current console. Each line of the answer shows in that window,
-/// so the person who started the program sees the run. The prompt goes to stdin.
+/// Runs <c>claude -p</c> as a child of the current process. Each line of the answer goes to the
+/// <see cref="IActivitySink"/> (the console by default), so the person who started the program sees the run.
+/// The prompt goes to stdin.
 /// </summary>
-public sealed class ClaudePrint(IOptions<ClaudeOptions> options) : IClaudePrint
+public sealed class ClaudePrint(IOptions<ClaudeOptions> options, IActivitySink activity) : IClaudePrint
 {
     private readonly ClaudeOptions _options = options.Value;
 
@@ -38,7 +40,7 @@ public sealed class ClaudePrint(IOptions<ClaudeOptions> options) : IClaudePrint
             start.ArgumentList.Add(argument);
         }
 
-        Console.WriteLine($"> claude -p --permission-mode {_options.PermissionMode}   (folder: {start.WorkingDirectory})");
+        activity.Write($"> claude -p --permission-mode {_options.PermissionMode}   (folder: {start.WorkingDirectory})");
         using var process = Process.Start(start) ?? throw new InvalidOperationException($"Could not start '{_options.Path}'.");
         await process.StandardInput.WriteAsync(prompt.AsMemory(), cancellationToken);
         process.StandardInput.Close();
@@ -46,7 +48,7 @@ public sealed class ClaudePrint(IOptions<ClaudeOptions> options) : IClaudePrint
         var text = new StringBuilder();
         while (await process.StandardOutput.ReadLineAsync(cancellationToken) is { } line)
         {
-            Console.WriteLine(line);
+            activity.Write(line);
             text.AppendLine(line);
         }
         await process.WaitForExitAsync(cancellationToken);

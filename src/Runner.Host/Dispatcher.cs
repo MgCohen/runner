@@ -7,6 +7,11 @@ namespace Runner.Host;
 /// Runs the matching handlers for each pending event in the store, oldest id first
 /// (contract B, return, exception, permanent failure and no match).
 /// </summary>
+/// <remarks>
+/// The <see cref="RunnerSwitches"/> pause the work. An event waits in the store, pending and not acked, when
+/// the listener is off, its source is off, or each matching handler that is not done is off.
+/// The dispatcher skips a waiting event and does not wake for it. A switch change wakes the dispatcher.
+/// </remarks>
 public sealed class Dispatcher(
     EventStore store,
     HandlerCatalog catalog,
@@ -14,38 +19,82 @@ public sealed class Dispatcher(
     ILoggerFactory loggers,
     DispatchSignal dispatch,
     AckSignal ack,
+    RunnerSwitches switches,
+    IActivitySink activity,
     IOptions<InboxOptions> options,
     TimeProvider time) : BackgroundService
 {
     private readonly ILogger _logger = loggers.CreateLogger<Dispatcher>();
+    private int _passes;
+
+    /// <summary>The number of passes over the store since start. Tests read it.</summary>
+    internal int Passes => _passes;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Handlers: {Handlers}",
             catalog.Handlers.Count == 0 ? "none" : string.Join(", ", catalog.Handlers.Select(h => h.Key)));
 
-        while (!stoppingToken.IsCancellationRequested)
+        void OnSwitch() => dispatch.Set();
+        switches.Changed += OnSwitch;
+        try
         {
-            try
+            while (!stoppingToken.IsCancellationRequested)
             {
-                foreach (var row in store.GetDue())
+                Interlocked.Increment(ref _passes);
+                DateTimeOffset? next = null;
+                try
                 {
-                    await ProcessAsync(row, stoppingToken);
+                    foreach (var row in store.GetDue())
+                    {
+                        if (!switches.ListenerEnabled) break;
+                        if (IsWaiting(row)) continue;
+                        await ProcessAsync(row, stoppingToken);
+                    }
+                    next = NextWake();
                 }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                return;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Dispatch loop error");
-                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
-            }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Dispatch loop error");
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                    continue;
+                }
 
-            var next = store.NextRetryTime();
-            await dispatch.WaitAsync(next is null ? null : next - time.GetUtcNow(), stoppingToken);
+                await dispatch.WaitAsync(next is null ? null : next - time.GetUtcNow(), stoppingToken);
+            }
         }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            switches.Changed -= OnSwitch;
+        }
+    }
+
+    /// <summary>
+    /// Returns true if a switch keeps the event in the store: its source is off, or each matching handler
+    /// that is not done is off.
+    /// </summary>
+    internal bool IsWaiting(StoredEvent row)
+    {
+        if (!switches.IsSourceEnabled(row.Event.Source)) return true;
+        var open = catalog.Match(row.Event).Where(h => !row.DoneHandlers.Contains(h.Key)).ToList();
+        return open.Count > 0 && open.All(h => !switches.IsHandlerEnabled(h.Type.Name));
+    }
+
+    /// <summary>Returns the earliest retry time of a pending event that does not wait for a switch, or null.</summary>
+    private DateTimeOffset? NextWake()
+    {
+        if (!switches.ListenerEnabled) return null;
+        return store.GetPending()
+            .Where(r => r.NextRetryAt is not null && !IsWaiting(r))
+            .Select(r => r.NextRetryAt)
+            .Min();
     }
 
     /// <summary>Runs one attempt for one event and records the result.</summary>
@@ -53,7 +102,9 @@ public sealed class Dispatcher(
     {
         var e = row.Event;
         var o = options.Value;
+        if (!switches.IsSourceEnabled(e.Source)) return;
         var handlers = catalog.Match(e);
+        var name = $"{e.Source}/{e.EventType}/{e.Action}";
 
         if (handlers.Count == 0)
         {
@@ -63,21 +114,28 @@ public sealed class Dispatcher(
             return;
         }
 
+        // A handler that is done in an earlier attempt does not run again. A paused handler waits.
+        var open = handlers.Where(h => !row.DoneHandlers.Contains(h.Key)).ToList();
+        var paused = open.Where(h => !switches.IsHandlerEnabled(h.Type.Name)).ToList();
+        var run = open.Except(paused).ToList();
+        if (run.Count == 0 && paused.Count > 0) return;
+
         var attempt = row.Attempts + 1;
         Exception? permanent = null;
         Exception? transient = null;
 
-        // A handler that is done in an earlier attempt does not run again.
-        foreach (var handler in handlers.Where(h => !row.DoneHandlers.Contains(h.Key)))
+        foreach (var handler in run)
         {
             await using var scope = scopes.CreateAsyncScope();
             var logger = loggers.CreateLogger(handler.Type);
+            var start = time.GetTimestamp();
             try
             {
                 var instance = (IEventHandler)(scope.ServiceProvider.GetService(handler.Type)
                     ?? ActivatorUtilities.CreateInstance(scope.ServiceProvider, handler.Type));
                 await instance.HandleAsync(e, new HandlerContext(attempt, logger, scope.ServiceProvider, stoppingToken));
                 store.MarkHandlerDone(e.Id, handler.Key);
+                activity.Write($"Event {e.Id} {name}: {handler.Type.Name} done ({Seconds(start)})");
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -87,11 +145,13 @@ public sealed class Dispatcher(
             catch (PermanentFailureException ex)
             {
                 logger.LogError(ex, "Event {Id}: permanent failure in {Handler}", e.Id, handler.Key);
+                activity.Write($"Event {e.Id} {name}: {handler.Type.Name} failed, no retry: {ex.Message}");
                 permanent ??= ex;
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Event {Id}: attempt {Attempt} failed in {Handler}", e.Id, attempt, handler.Key);
+                activity.Write($"Event {e.Id} {name}: {handler.Type.Name} attempt {attempt} failed: {ex.Message}");
                 transient ??= ex;
             }
         }
@@ -111,6 +171,13 @@ public sealed class Dispatcher(
             store.ScheduleRetry(e.Id, attempt, Describe(transient), time.GetUtcNow() + delay);
             return;
         }
+        else if (paused.Count > 0)
+        {
+            var names = string.Join(", ", paused.Select(h => h.Type.Name));
+            _logger.LogInformation("Event {Id}: waits for paused handlers: {Handlers}", e.Id, names);
+            activity.Write($"Event {e.Id} {name}: waits for paused handlers: {names}");
+            return;
+        }
         else
         {
             store.MarkDone(e.Id, attempt);
@@ -118,6 +185,8 @@ public sealed class Dispatcher(
 
         ack.Set();
     }
+
+    private string Seconds(long start) => $"{time.GetElapsedTime(start).TotalSeconds:0.0} s";
 
     private static string Describe(Exception ex) => $"{ex.GetType().Name}: {ex.Message}";
 }
