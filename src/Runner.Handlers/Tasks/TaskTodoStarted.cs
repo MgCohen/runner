@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -118,23 +117,7 @@ public sealed class TaskTodoStarted(
         }
     }
 
-    internal string BuildPrompt(NotionPage page, string markdown)
-    {
-        if (markdown.Length > _options.MaxMarkdownChars)
-        {
-            markdown = markdown[.._options.MaxMarkdownChars] + "\n\n[The page continues. Read it at the URL.]";
-        }
-        return new StringBuilder()
-            .AppendLine(_options.Instructions)
-            .AppendLine()
-            .AppendLine($"Task: {page.Title}")
-            .AppendLine($"URL: {page.Url}")
-            .AppendLine($"Page ID: {page.Id}")
-            .AppendLine()
-            .AppendLine("Task page (Markdown):")
-            .AppendLine(markdown)
-            .ToString();
-    }
+    internal string BuildPrompt(NotionPage page, string markdown) => TaskPrompt.Build(_options, page, markdown);
 
     private static string SessionName(NotionPage page)
     {
