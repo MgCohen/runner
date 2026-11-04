@@ -20,7 +20,7 @@ The contracts between the parts are in [CONTRACTS.md](CONTRACTS.md).
 
 ```powershell
 .\host.ps1           # receives inbox events and logs them; no handler starts Claude
-.\host.ps1 -Claude   # also turns on the handlers that start Claude sessions
+.\host.ps1 -Claude   # also turns on the Tasks handler: a task in Todo runs claude -p here
 ```
 
 Stop it with Ctrl+C.
