@@ -90,48 +90,36 @@ public sealed class SwitchTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Paused_handler_keeps_the_event_pending_and_the_dispatcher_does_not_spin()
+    public async Task Handler_that_is_off_is_skipped_and_the_event_is_acked()
     {
         await using var host = await TestHost.StartAsync(_inbox);
         await Connected(host);
         host.Switches.SetHandler(nameof(SecondHandler), false);
 
         await _inbox.AddAsync(TestHost.Event(5, "ok"));
-        await TestHost.WaitUntil(() => host.Recorder.Count("ok", 5) == 1, "ok handler of event 5");
-        await Task.Delay(300);
+        await TestHost.WaitUntil(() => Acked(5), "ack of event 5");
 
-        var row = host.Store.Get(5)!;
-        Assert.Equal(EventStatus.Pending, row.Status);
-        Assert.Contains(typeof(OkHandler).FullName!, row.DoneHandlers);
+        Assert.Equal(1, host.Recorder.Count("ok", 5));
         Assert.Equal(0, host.Recorder.Count("second", 5));
-        Assert.False(Acked(5));
-
-        var passes = host.Dispatcher.Passes;
-        await Task.Delay(500);
-        Assert.InRange(host.Dispatcher.Passes - passes, 0, 1);
+        Assert.Equal(EventStatus.Done, host.Store.Get(5)!.Status);
 
         host.Switches.SetHandler(nameof(SecondHandler), true);
-
-        await TestHost.WaitUntil(() => Acked(5), "ack of event 5");
-        Assert.Equal(1, host.Recorder.Count("second", 5));
-        Assert.Equal(1, host.Recorder.Count("ok", 5));
-        Assert.Equal(EventStatus.Done, host.Store.Get(5)!.Status);
+        await Task.Delay(400);
+        Assert.Equal(0, host.Recorder.Count("second", 5));
     }
 
     [Fact]
-    public async Task Event_whose_only_handler_is_paused_does_not_run()
+    public async Task Event_whose_only_handler_is_off_is_done_without_a_run()
     {
         await using var host = await TestHost.StartAsync(_inbox);
         await Connected(host);
         host.Switches.SetHandler(nameof(PermanentHandler), false);
 
         await _inbox.AddAsync(TestHost.Event(6, "permanent"));
-        await TestHost.WaitUntil(() => host.Store.Get(6) is not null, "event 6 stored");
-        await Task.Delay(400);
+        await TestHost.WaitUntil(() => Acked(6), "ack of event 6");
 
         Assert.Equal(0, host.Recorder.Count("permanent", 6));
-        Assert.Equal(0, host.Store.Get(6)!.Attempts);
-        Assert.False(Acked(6));
+        Assert.Equal(EventStatus.Done, host.Store.Get(6)!.Status);
     }
 
     [Fact]

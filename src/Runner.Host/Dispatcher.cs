@@ -77,15 +77,10 @@ public sealed class Dispatcher(
     }
 
     /// <summary>
-    /// Returns true if a switch keeps the event in the store: its source is off, or each matching handler
-    /// that is not done is off.
+    /// Returns true if a switch keeps the event in the store: its source is off.
+    /// A handler that is off does not keep an event: the event is done without it.
     /// </summary>
-    internal bool IsWaiting(StoredEvent row)
-    {
-        if (!switches.IsSourceEnabled(row.Event.Source)) return true;
-        var open = catalog.Match(row.Event).Where(h => !row.DoneHandlers.Contains(h.Key)).ToList();
-        return open.Count > 0 && open.All(h => !switches.IsHandlerEnabled(h.Type.Name));
-    }
+    internal bool IsWaiting(StoredEvent row) => !switches.IsSourceEnabled(row.Event.Source);
 
     /// <summary>Returns the earliest retry time of a pending event that does not wait for a switch, or null.</summary>
     private DateTimeOffset? NextWake()
@@ -114,11 +109,16 @@ public sealed class Dispatcher(
             return;
         }
 
-        // A handler that is done in an earlier attempt does not run again. A paused handler waits.
+        // A handler that is done in an earlier attempt does not run again. A handler that is off is skipped.
         var open = handlers.Where(h => !row.DoneHandlers.Contains(h.Key)).ToList();
-        var paused = open.Where(h => !switches.IsHandlerEnabled(h.Type.Name)).ToList();
-        var run = open.Except(paused).ToList();
-        if (run.Count == 0 && paused.Count > 0) return;
+        var skipped = open.Where(h => !switches.IsHandlerEnabled(h.Type.Name)).ToList();
+        var run = open.Except(skipped).ToList();
+        if (skipped.Count > 0)
+        {
+            var names = string.Join(", ", skipped.Select(h => h.Type.Name));
+            _logger.LogInformation("Event {Id}: skipped handlers that are off: {Handlers}", e.Id, names);
+            activity.Write($"Event {e.Id} {name}: skipped (off): {names}");
+        }
 
         var attempt = row.Attempts + 1;
         Exception? permanent = null;
@@ -169,13 +169,6 @@ public sealed class Dispatcher(
         {
             var delay = Backoff.Delay(o.RetryBaseDelay, o.RetryMaxDelay, attempt - 1);
             store.ScheduleRetry(e.Id, attempt, Describe(transient), time.GetUtcNow() + delay);
-            return;
-        }
-        else if (paused.Count > 0)
-        {
-            var names = string.Join(", ", paused.Select(h => h.Type.Name));
-            _logger.LogInformation("Event {Id}: waits for paused handlers: {Handlers}", e.Id, names);
-            activity.Write($"Event {e.Id} {name}: waits for paused handlers: {names}");
             return;
         }
         else

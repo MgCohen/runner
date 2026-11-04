@@ -84,5 +84,5 @@ public sealed class PageUpdated : IEventHandler
 | `PermanentFailureException` | Failed without a retry, then acked. |
 | Duplicates | A handler can get the same event two times. It must accept that. |
 | No match | The connector acks the event immediately. |
-| Paused handler | A handler that is off in the switches does not run. The event stays pending in the local store and is not acked until each matching handler is done. |
+| Handler off | A handler that is off in the switches does not run for the event. The event is done and acked without it. Turning the handler on again does not run it for earlier events. |
 | Activity output | A handler writes lines for the person who watches the runner to `IActivitySink.Write(line)`. The connector gives a console sink if the application registers no sink. |

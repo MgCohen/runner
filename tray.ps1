@@ -1,8 +1,13 @@
 # Runs the runner in the tray app. The runner runs in the tray app process. Nothing runs in the background.
-# Usage: .\tray.ps1
+# Usage: .\tray.ps1           Real mode. The listener starts as saved in switches.json.
+#        .\tray.ps1 -Paused   Real mode. The listener starts off.
+#        .\tray.ps1 -Mock     Mock mode: fake inbox, Notion and Claude. No network, no claude process.
+#        -SelfTest            Runs a fixed test, saves widget images in %LOCALAPPDATA%\Runner\mock\selftest
+#                             (mock) or %LOCALAPPDATA%\Runner\selftest-real (real), and exits.
 # Stop it with Exit in the tray menu, or with Ctrl+C in this window. Keep this window open.
 # The switches (listener, sources, handlers) are in %LOCALAPPDATA%\Runner\switches.json.
 # The tokens come from 1Password (deploy/runner.secrets.env) through op run.
+param([switch] $Mock, [switch] $Paused, [switch] $SelfTest)
 $ErrorActionPreference = 'Stop'
 $env:Path = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')
 if (-not $env:OP_SERVICE_ACCOUNT_TOKEN) {
@@ -19,4 +24,12 @@ Write-Host "Runner in the tray app. Click the tray icon to open it. Stop with Ex
 $project = Join-Path $PSScriptRoot 'src\Runner.Tray'
 dotnet build $project -v q --nologo | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "The build of $project failed. Run: dotnet build $project" }
-op run --env-file (Join-Path $PSScriptRoot 'deploy\runner.secrets.env') -- dotnet run --no-build --project $project
+$appArgs = @()
+if ($Mock) { $appArgs += '--mock' }
+if ($Paused) { $appArgs += '--paused' }
+if ($SelfTest) { $appArgs += '--selftest' }
+if ($Mock) {
+    dotnet run --no-build --project $project -- @appArgs
+} else {
+    op run --env-file (Join-Path $PSScriptRoot 'deploy\runner.secrets.env') -- dotnet run --no-build --project $project -- @appArgs
+}
