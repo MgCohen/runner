@@ -19,8 +19,17 @@ public class ClaudeLauncherTests
     [Fact]
     public void Background_arguments_start_a_remote_control_session() =>
         Assert.Equal(
-            ["--bg", "--remote-control", "notion Plan", "--permission-mode", "plan", "--session-id", "id-1", "--", "-do it"],
-            ClaudeLauncher.BackgroundArguments(new ClaudeOptions { PermissionMode = "plan" }, "notion Plan", "id-1", "-do it"));
+            ["--bg", "--remote-control", "notion Plan", "-n", "notion Plan", "--permission-mode", "plan", "--", "-do it"],
+            ClaudeLauncher.BackgroundArguments(new ClaudeOptions { PermissionMode = "plan" }, "notion Plan", "-do it"));
+
+    [Fact]
+    public void Background_id_comes_from_the_cli_output() =>
+        Assert.Equal("b904958e", ClaudeLauncher.ParseBackgroundId(
+            "Starting background service…\nbackgrounded · b904958e\n  claude agents             list sessions\n"));
+
+    [Fact]
+    public void Background_id_is_null_when_the_output_has_none() =>
+        Assert.Null(ClaudeLauncher.ParseBackgroundId("Workspace not trusted."));
 
     [Theory]
     [InlineData("bypassPermissions")]

@@ -51,7 +51,7 @@ The launcher runs these command lines:
 
 ```text
 claude -p --permission-mode <mode>                     (prompt on stdin)
-claude --bg --remote-control <name> --permission-mode <mode> --session-id <uuid> -- <prompt>
+claude --bg --remote-control <name> -n <name> --permission-mode <mode> -- <prompt>
 ```
 
 The launcher refuses `bypassPermissions`.
@@ -63,7 +63,7 @@ The launcher refuses `bypassPermissions`.
 | `Notion:Token` | Value of `NOTION_API_TOKEN` |
 | `Notion:Version` | `2026-03-11` |
 | `Claude:Path` | `claude` (from the PATH) |
-| `Claude:WorkingDirectory` | Current folder |
+| `Claude:WorkingDirectory` | Current folder. It must be a folder that Claude Code trusts, or `claude --bg` refuses to start. |
 | `Claude:PermissionMode` | `auto` |
 | `Handlers:NotionPageUpdated:Enabled` | `false` |
 | `Handlers:NotionPageUpdated:DataSourceIds` | Empty (all parents) |
