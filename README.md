@@ -19,9 +19,9 @@ The contracts between the parts are in [CONTRACTS.md](CONTRACTS.md).
 ## Run the Notion tasks yourself
 
 ```powershell
-.	asks.ps1          # asks before each Todo task, then runs claude -p in this window
-.	asks.ps1 --list   # lists the Todo tasks
-.	asks.ps1 --yes    # runs each Todo task without a question
+.\tasks.ps1          # asks before each Todo task, then runs claude -p in this window
+.\tasks.ps1 --list   # lists the Todo tasks
+.\tasks.ps1 --yes    # runs each Todo task without a question
 ```
 
 For each task it sets In Progress, runs `claude -p` with the task page as the prompt, and sets In Review with the answer in `Result`. If Claude fails, the task goes back to Backlog. The Notion token comes from 1Password through `op run`.
