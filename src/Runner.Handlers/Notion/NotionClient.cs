@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using Runner.Abstractions;
 
@@ -27,7 +29,18 @@ public sealed class NotionClient(HttpClient http, IOptions<NotionOptions> option
         return document.RootElement.TryGetProperty("markdown", out var markdown) ? markdown.GetString() ?? "" : "";
     }
 
-    private async Task<JsonDocument> GetJsonAsync(string path, CancellationToken cancellationToken)
+    public async Task UpdatePageAsync(string pageId, JsonObject properties, CancellationToken cancellationToken)
+    {
+        var body = new JsonObject { ["properties"] = properties };
+        using var document = await SendJsonAsync(HttpMethod.Patch, $"v1/pages/{Uri.EscapeDataString(pageId)}",
+            body.ToJsonString(), cancellationToken);
+    }
+
+    private Task<JsonDocument> GetJsonAsync(string path, CancellationToken cancellationToken) =>
+        SendJsonAsync(HttpMethod.Get, path, null, cancellationToken);
+
+    private async Task<JsonDocument> SendJsonAsync(HttpMethod method, string path, string? body,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.Token))
         {
@@ -35,7 +48,11 @@ public sealed class NotionClient(HttpClient http, IOptions<NotionOptions> option
                 "The Notion token is missing. Set Notion:Token in user secrets or the NOTION_API_TOKEN environment variable.");
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(_options.BaseUrl), path));
+        using var request = new HttpRequestMessage(method, new Uri(new Uri(_options.BaseUrl), path));
+        if (body is not null)
+        {
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+        }
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.Token);
         request.Headers.Add("Notion-Version", _options.Version);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -43,8 +60,8 @@ public sealed class NotionClient(HttpClient http, IOptions<NotionOptions> option
         using var response = await http.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            var message = $"Notion GET {path} returned {(int)response.StatusCode}: {body}";
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            var message = $"Notion {method} {path} returned {(int)response.StatusCode}: {error}";
             throw response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized
                 or HttpStatusCode.Forbidden or HttpStatusCode.NotFound
                 ? new PermanentFailureException(message)

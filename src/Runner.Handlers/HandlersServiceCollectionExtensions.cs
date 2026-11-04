@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Runner.Abstractions;
 using Runner.Handlers.Claude;
 using Runner.Handlers.Notion;
+using Runner.Handlers.Tasks;
 
 namespace Runner.Handlers;
 
@@ -36,6 +37,11 @@ public static class HandlersServiceCollectionExtensions
         services.AddOptions<NotionPageUpdatedOptions>()
             .Bind(configuration.GetSection(NotionPageUpdatedOptions.Section));
         services.TryAddSingleton<PageCooldown>();
+
+        services.AddOptions<TaskOptions>().Bind(configuration.GetSection(TaskOptions.Section));
+        services.TryAddSingleton<IClaudeAgents, ClaudeAgents>();
+        services.TryAddSingleton<TaskStore>();
+        services.AddHostedService<TaskSessionWatcher>();
 
         foreach (var type in HandlerTypes())
         {

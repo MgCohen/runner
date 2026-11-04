@@ -27,8 +27,8 @@ public class OnMatchingTests
         Assert.Equal(expected, Matches<LogEverything>(Events.Other(source, eventType, action)));
 
     [Fact]
-    public void HandlerTypes_finds_both_handlers() =>
+    public void HandlerTypes_finds_each_handler() =>
         Assert.Equal(
-            new[] { nameof(LogEverything), nameof(NotionPageUpdated) },
+            new[] { nameof(LogEverything), nameof(NotionPageUpdated), nameof(Runner.Handlers.Tasks.TaskTodoStarted) },
             HandlersServiceCollectionExtensions.HandlerTypes().Select(t => t.Name).Order().ToArray());
 }

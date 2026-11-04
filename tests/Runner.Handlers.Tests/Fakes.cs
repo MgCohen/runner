@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging.Abstractions;
 using Runner.Abstractions;
 using Runner.Handlers.Claude;
@@ -68,6 +69,28 @@ internal sealed class FakeNotionClient : INotionClient
 
     public Task<string> GetPageMarkdownAsync(string pageId, CancellationToken cancellationToken) =>
         MarkdownError is null ? Task.FromResult(Markdown) : Task.FromException<string>(MarkdownError);
+
+    public List<(string PageId, JsonObject Properties)> Updates { get; } = [];
+
+    public Task UpdatePageAsync(string pageId, JsonObject properties, CancellationToken cancellationToken)
+    {
+        Updates.Add((pageId, properties));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeClaudeAgents : IClaudeAgents
+{
+    public List<ClaudeAgent> Agents { get; } = [];
+    public string? Link { get; set; } = "https://claude.ai/code/session_abc";
+    public string? Answer { get; set; } = "Done: opened PR #1.";
+
+    public Task<IReadOnlyList<ClaudeAgent>> ListAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<ClaudeAgent>>(Agents.ToList());
+
+    public Task<string?> GetRemoteLinkAsync(string id, CancellationToken cancellationToken) => Task.FromResult(Link);
+
+    public string? ReadLastAnswer(string sessionId) => Answer;
 }
 
 internal sealed class FakeClaudeLauncher : IClaudeLauncher
@@ -82,10 +105,14 @@ internal sealed class FakeClaudeLauncher : IClaudeLauncher
         return Task.FromResult(PrintResult);
     }
 
+    public Exception? StartError { get; set; }
+
     public Task<ClaudeSession> StartRemoteSessionAsync(ClaudeRequest request, CancellationToken cancellationToken)
     {
         Remote.Add(request);
-        return Task.FromResult(new ClaudeSession("session-1", request.Name ?? "", ""));
+        return StartError is null
+            ? Task.FromResult(new ClaudeSession("session-1", request.Name ?? "", ""))
+            : Task.FromException<ClaudeSession>(StartError);
     }
 }
 
