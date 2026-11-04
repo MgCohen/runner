@@ -3,13 +3,14 @@
 # 2. Copies run-runner.ps1, which keeps the runner running.
 # 3. Adds the shortcut "Runner Host" to the Startup folder, so that the runner starts at log-on.
 # 4. Starts the runner.
-# Set the user environment variable INBOX_TOKEN before you run this script.
+# Set OP_SERVICE_ACCOUNT_TOKEN (1Password) or INBOX_TOKEN as a user environment variable first.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $base = Join-Path $env:LOCALAPPDATA 'Runner'
 
-if (-not [Environment]::GetEnvironmentVariable('INBOX_TOKEN', 'User')) {
-    throw 'Set the user environment variable INBOX_TOKEN first.'
+if (-not ([Environment]::GetEnvironmentVariable('OP_SERVICE_ACCOUNT_TOKEN', 'User') -or
+         [Environment]::GetEnvironmentVariable('INBOX_TOKEN', 'User'))) {
+    throw 'Set the user environment variable OP_SERVICE_ACCOUNT_TOKEN (1Password) or INBOX_TOKEN first.'
 }
 if (-not [Environment]::GetEnvironmentVariable('Inbox__StorePath', 'User')) {
     [Environment]::SetEnvironmentVariable('Inbox__StorePath', (Join-Path $base 'runner-host.db'), 'User')
@@ -21,7 +22,7 @@ Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'run-runner
 Get-Process Runner.Host -ErrorAction SilentlyContinue | Stop-Process -Force
 
 dotnet publish (Join-Path $repo 'src\Runner.Host') -c Release -o (Join-Path $base 'app')
-Copy-Item (Join-Path $PSScriptRoot 'run-runner.ps1') $base -Force
+Copy-Item (Join-Path $PSScriptRoot 'run-runner.ps1'), (Join-Path $PSScriptRoot 'runner.secrets.env') $base -Force
 
 $script = Join-Path $base 'run-runner.ps1'
 $arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`""

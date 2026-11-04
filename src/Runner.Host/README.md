@@ -71,7 +71,7 @@ Run `deploy/install.ps1`. It needs no admin rights.
 | Program | `%LOCALAPPDATA%\Runner\app` |
 | Start | Shortcut "Runner Host" in the Startup folder. It runs `run-runner.ps1` hidden at log-on. |
 | Restart | `run-runner.ps1` starts the runner again 30 seconds after it stops |
-| Settings | User environment variables: `INBOX_TOKEN` (required), `Inbox__StorePath`, `Claude__WorkingDirectory`, `NOTION_API_TOKEN`. The script reads them at each start. |
+| Settings | If `OP_SERVICE_ACCOUNT_TOKEN` is set, the runner starts through `op run` with `runner.secrets.env` (1Password vault `agent`). If not, it uses the user environment variables `INBOX_TOKEN` and `NOTION_API_TOKEN`. Other user variables: `Inbox__StorePath`, `Claude__WorkingDirectory`, `Handlers__NotionPageUpdated__Enabled`. The script reads them at each start. |
 | Logs | `runner.log` (current run), `runner.old.log` (previous run), `runner.err.log` |
 | Stop | Stop the `powershell.exe` that runs `run-runner.ps1`, then `Runner.Host.exe`. |
 
