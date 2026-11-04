@@ -125,17 +125,25 @@ The page and the C# host exchange JSON messages through WebView2 (`postMessage` 
 
 ## 5. Capabilities in detail
 
-Each capability has the same parts: **Behavior · Data and commands · Modules · Patterns and decisions · Extension · Acceptance**.
+Each capability has the same parts: **Definition · Functions · UI · Data and commands · Modules · Patterns and decisions · Extension · Acceptance**. The definition says what the capability is. Functions say what it does. UI says where the user sees it.
 
 <details>
 <summary><h3 id="c1-listener">C1 · Listener</h3></summary>
 
-**Behavior.** The header is on every page.
+> The listener is the live connection from the runner to the inbox Worker. When it is on, the inbox pushes each new event to the runner. When it is off, the events wait in the inbox.
 
-- **Layout, left to right:** listener switch, title "Runner", subtitle, pin, settings, hide (✕).
+**Functions.**
+
+- Connect to the inbox through the `/listen` WebSocket.
+- Receive pushed events, and give them to the dispatcher.
+- At each connect, get the events that came while the listener was off (catch-up).
+- Pause and resume when the user says so. Show the connection state.
+- At start, use the saved state. With `--paused` or `listenerOnStart = false`, start off.
+
+**UI.** The listener is the main control, so its switch and state are in the header of every page.
+
+- **Header, left to right:** listener switch, title "Runner", subtitle, pin, settings, hide (✕).
 - **Subtitle:** "Connected · {consumer}", "Connecting…", "Paused" or "Error: {short reason}".
-- **Switch:** sets the listener on or off. When off, events wait in the inbox.
-- **At start:** the listener is as saved. With `--paused` or `listenerOnStart = false`, it starts off.
 
 **Data and commands.**
 
@@ -170,7 +178,16 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <img src="images/handler-detail-light.png" width="200" alt="Handler detail">
 </p>
 
-**Behavior: Home.**
+> A source is an external system that sends webhooks to the inbox, for example Notion or GitHub. A handler is a C# class that runs on some events of a source, for example "start a task when a Notion task goes to Todo".
+
+**Functions.**
+
+- List each source and its handlers.
+- Turn each source and each handler on or off.
+- Show the last event and the event count of each source and handler.
+- Show what one handler listens to, and open its events in the Inbox.
+
+**UI: Home.**
 
 - **Entry:** bottom bar "Home". It is the start page.
 - **Layout:** search field "Search sources and handlers", then one foldable card for each source, in the order of the inbox source list.
@@ -180,7 +197,7 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 - **Search:** shows only the matching sources and handlers, unfolded.
 - **Empty states:** "No handlers yet" for a source with no handlers. "No sources or handlers match" for a search with no match.
 
-**Behavior: handler detail.**
+**UI: handler detail.**
 
 - **Entry:** a handler row on Home.
 - **Layout:** "‹ Home", the name and the switch, a one-line description, a **Details** group (Source · Listens to · Last · Events · Failed), the button "Open in inbox".
@@ -235,7 +252,15 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <img src="images/event-detail-light.png" width="200" alt="Event detail">
 </p>
 
-**Behavior: Inbox.**
+> The Inbox shows the events in the local store: each event that the runner received, its state, and the result of each handler on it.
+
+**Functions.**
+
+- List the events, newest first, 50 at a time.
+- Find events by text, state, source or handler.
+- Show one event: its details, the result of each handler, and its payload.
+
+**UI: Inbox.**
 
 - **Entry:** bottom bar "Inbox", or "Open in inbox" on a handler page.
 - **Layout:**
@@ -252,7 +277,7 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
   - **Footer:** "Clear all" · "Done". The footer stays visible when the panel scrolls.
 - **Empty states:** "No events yet" for an empty store. "No events match these filters" for no match.
 
-**Behavior: event detail.**
+**UI: event detail.**
 
 - **Entry:** an Inbox row, or "Open event #… in inbox" on a traffic detail page.
 - **Layout:** "‹ Inbox", "#{id} {source}" and the state badge, the event type, a **Details** group (Received · Attempts · Acked), a **Handlers** group (one row for each handler, with its result), a **Payload** group (the JSON, formatted).
@@ -294,7 +319,16 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <img src="images/traffic-detail-light.png" width="200" alt="Traffic detail">
 </p>
 
-**Behavior: Traffic.**
+> Traffic is the log of each network call and socket message that the runner sends or receives. It shows what the runner does on the network, with no secrets.
+
+**Functions.**
+
+- Record each HTTP call and each socket message, with its size, duration and result.
+- Find entries by text, direction, kind or result.
+- Show one entry. For a socket event, open that event in the Inbox.
+- Keep the bodies in memory only when the user turns on "Capture bodies".
+
+**UI: Traffic.**
 
 - **Entry:** bottom bar "Traffic".
 - **Layout:**
@@ -305,7 +339,7 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 - **Filter groups:** Direction (in, out) · Kind (event, hello, connect, GET, POST, PATCH and others that occur) · Result (ok, error).
 - **Empty state:** "No traffic matches these filters".
 
-**Behavior: traffic detail.**
+**UI: traffic detail.**
 
 - **Layout:** "‹ Traffic", "{kind} {target}" and the status badge, a **Details** group (Direction · Host · Path · Size · Duration).
 - **Socket event:** the button "Open event #{id} in inbox".
@@ -344,7 +378,15 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 
 <img src="images/settings-light.png" width="200" alt="Settings">
 
-**Behavior.**
+> Settings are the options of the app that the user can change. The app keeps them in one file.
+
+**Functions.**
+
+- Show the settings in groups.
+- Apply a change at once, and save it.
+- Show read-only facts about the app: consumer, inbox URL, store folder, version.
+
+**UI.**
 
 - **Entry:** the settings button in the header. A second click returns to the page before.
 - **Layout:** "‹ Back", then the groups At start · Traffic · Inbox · Appearance · About.
@@ -386,7 +428,16 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <details>
 <summary><h3 id="c6-window-and-tray">C6 · Window and tray</h3></summary>
 
-**Behavior.**
+> The window is the widget: a small panel that holds all pages. The tray icon in the Windows taskbar opens the window and shows the listener state when the window is hidden.
+
+**Functions.**
+
+- Open and hide the window from the tray icon.
+- Move the window, and keep it on top (pin).
+- Go between the pages.
+- Give a tray menu with the main actions, and exit the app.
+
+**UI.**
 
 | Item | Behavior |
 |---|---|
@@ -436,7 +487,14 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <img src="images/home-dark.png" width="200" alt="Home, dark">
 </p>
 
-**Behavior.** The theme follows the `theme` setting: System, Light, Dark, or a theme file.
+> The theme is the set of colors, sizes and fonts of the UI. It is separate from the components, so a new look is one new file.
+
+**Functions.**
+
+- Follow the Windows light or dark mode, or use the theme that the user selects.
+- Load a theme file, and use the default value for each token that it does not set.
+
+**UI.** The `theme` setting in Settings: System, Light, Dark, or a theme file.
 
 **Theme system.**
 
@@ -509,10 +567,15 @@ Each capability has the same parts: **Behavior · Data and commands · Modules �
 <details>
 <summary><h3 id="c8-mock-mode-and-self-test">C8 · Mock mode and self-test</h3></summary>
 
-**Behavior.**
+> Mock mode runs the real app with fake external services, so nothing leaves the PC. The self-test drives the app through fixed steps, checks each result, and saves a screenshot of each step.
 
-- **`--mock`:** a fake inbox, a fake Notion and a fake Claude. The tray menu can send mock events.
-- **`--selftest`:** runs a fixed test, saves a screenshot of each page, and exits.
+**Functions.**
+
+- `--mock`: replace the inbox, Notion and Claude with fakes. The tray menu can send mock events.
+- `--selftest`: run the acceptance checks, save a screenshot of each page, and exit.
+
+**UI.** Mock mode shows the mock items in the tray menu. The self-test needs no user action.
+
 - **Folders:** mock data in `%LOCALAPPDATA%\Runner\mock`. Real self-test images in `%LOCALAPPDATA%\Runner\selftest-real`.
 - **Commands:** `tray.ps1 -Mock -SelfTest` for the mock tests, `tray.ps1 -SelfTest` for the real tests, with the Claude handlers off.
 
