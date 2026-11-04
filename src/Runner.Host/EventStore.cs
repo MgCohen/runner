@@ -94,6 +94,10 @@ public sealed class EventStore
     public IReadOnlyList<StoredEvent> GetDue() =>
         Query("SELECT * FROM events WHERE status = 'Pending' AND next_retry_at <= $now ORDER BY id", ("$now", Now()));
 
+    /// <summary>Returns all pending events, oldest id first.</summary>
+    public IReadOnlyList<StoredEvent> GetPending() =>
+        Query("SELECT * FROM events WHERE status = 'Pending' ORDER BY id");
+
     /// <summary>Returns the earliest retry time of a pending event, or null.</summary>
     public DateTimeOffset? NextRetryTime()
     {

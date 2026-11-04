@@ -63,6 +63,7 @@ A task in the Notion database Workflow / Tasks starts Claude when its status bec
 | `INotionClient` | `GetPageAsync` (properties), `GetPageMarkdownAsync` (content), `UpdatePageAsync` (set properties) |
 | `NotionProperties` | Builds property values: `Status`, `Date`, `Url`, `Text` |
 | `IClaudeLauncher` | `RunPrintAsync` (`claude -p`), `StartRemoteSessionAsync` (background Remote Control session) |
+| `IActivitySink` | `Write` (a line in the runner window or the Activity tab of the tray app). `ClaudePrint` writes the `claude -p` output to it. |
 | `IClaudeAgents` | `ListAsync` (`claude agents --json`), `GetRemoteLinkAsync` (claude.ai link), `ReadLastAnswer` (from the transcript) |
 
 The launcher runs these command lines:

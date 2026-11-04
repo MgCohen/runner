@@ -1,11 +1,15 @@
 using System.Reflection;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Runner.Abstractions;
 
 namespace Runner.Host;
 
 public static class ServiceCollectionExtensions
 {
-    /// <summary>Adds the connector: options, store, socket, catch-up, dispatch and ack.</summary>
+    /// <summary>
+    /// Adds the connector: options, store, socket, catch-up, dispatch, ack, switches and traffic log.
+    /// Register <see cref="RunnerSwitches"/> or <see cref="IActivitySink"/> before this call to replace the defaults.
+    /// </summary>
     public static IServiceCollection AddRunnerHost(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<InboxOptions>()
@@ -17,7 +21,12 @@ public static class ServiceCollectionExtensions
             .Validate(o => o.MaxAttempts >= 1, "Inbox:MaxAttempts must be 1 or more.")
             .ValidateOnStart();
 
-        services.AddSingleton(TimeProvider.System);
+        services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton(_ => RunnerSwitches.InMemory());
+        services.TryAddSingleton<IActivitySink, ConsoleActivitySink>();
+        services.AddSingleton<TrafficLog>();
+        services.AddTransient<TrafficHandler>();
+        services.ConfigureHttpClientDefaults(http => http.AddHttpMessageHandler<TrafficHandler>());
         services.AddSingleton<EventStore>();
         services.AddSingleton<HandlerCatalog>();
         services.AddSingleton<DispatchSignal>();

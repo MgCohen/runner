@@ -26,8 +26,11 @@ public sealed class TestHost : IAsyncDisposable
     public Recorder Recorder => Host.Services.GetRequiredService<Recorder>();
     public EventStore Store => Host.Services.GetRequiredService<EventStore>();
     public SocketListener Socket => Host.Services.GetRequiredService<SocketListener>();
+    public RunnerSwitches Switches => Host.Services.GetRequiredService<RunnerSwitches>();
+    public TrafficLog Traffic => Host.Services.GetRequiredService<TrafficLog>();
+    public Dispatcher Dispatcher => Host.Services.GetServices<IHostedService>().OfType<Dispatcher>().Single();
 
-    public static async Task<TestHost> StartAsync(FakeInbox inbox, string? folder = null)
+    public static async Task<TestHost> StartAsync(FakeInbox inbox, string? folder = null, RunnerSwitches? switches = null)
     {
         var ownsFolder = folder is null;
         folder ??= Path.Combine(Path.GetTempPath(), "runner-host-tests", Guid.NewGuid().ToString("N"));
@@ -47,6 +50,8 @@ public sealed class TestHost : IAsyncDisposable
             ["Inbox:AckBaseDelay"] = "00:00:00.050",
             ["Inbox:AckMaxDelay"] = "00:00:00.200",
         });
+        if (switches is not null) builder.Services.AddSingleton(switches);
+        builder.Services.AddSingleton<IActivitySink, NullActivitySink>();
         builder.Services.AddRunnerHost(builder.Configuration);
         builder.Services.AddHandlerAssembly(typeof(TestHost).Assembly);
         builder.Services.AddSingleton<Recorder>();
@@ -91,5 +96,13 @@ public sealed class TestHost : IAsyncDisposable
         catch (IOException)
         {
         }
+    }
+}
+
+/// <summary>Keeps the activity lines out of the test output.</summary>
+public sealed class NullActivitySink : IActivitySink
+{
+    public void Write(string line)
+    {
     }
 }
