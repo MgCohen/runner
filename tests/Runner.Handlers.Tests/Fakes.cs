@@ -71,6 +71,10 @@ internal sealed class FakeNotionClient : INotionClient
         MarkdownError is null ? Task.FromResult(Markdown) : Task.FromException<string>(MarkdownError);
 
     public List<(string PageId, JsonObject Properties)> Updates { get; } = [];
+    public List<NotionPage> QueryResult { get; } = [];
+
+    public Task<IReadOnlyList<NotionPage>> QueryDataSourceAsync(string dataSourceId, JsonObject filter,
+        CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<NotionPage>>(QueryResult.ToList());
 
     public Task UpdatePageAsync(string pageId, JsonObject properties, CancellationToken cancellationToken)
     {

@@ -36,6 +36,28 @@ public sealed class NotionClient(HttpClient http, IOptions<NotionOptions> option
             body.ToJsonString(), cancellationToken);
     }
 
+    public async Task<IReadOnlyList<NotionPage>> QueryDataSourceAsync(string dataSourceId, JsonObject filter,
+        CancellationToken cancellationToken)
+    {
+        var pages = new List<NotionPage>();
+        string? cursor = null;
+        do
+        {
+            var body = new JsonObject { ["filter"] = filter.DeepClone(), ["page_size"] = 100 };
+            if (cursor is not null) body["start_cursor"] = cursor;
+            using var document = await SendJsonAsync(HttpMethod.Post,
+                $"v1/data_sources/{Uri.EscapeDataString(dataSourceId)}/query", body.ToJsonString(), cancellationToken);
+            var root = document.RootElement;
+            if (root.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
+            {
+                pages.AddRange(results.EnumerateArray().Select(NotionPage.FromJson));
+            }
+            cursor = root.TryGetProperty("has_more", out var more) && more.ValueKind == JsonValueKind.True
+                && root.TryGetProperty("next_cursor", out var next) ? next.GetString() : null;
+        } while (cursor is not null);
+        return pages;
+    }
+
     private Task<JsonDocument> GetJsonAsync(string path, CancellationToken cancellationToken) =>
         SendJsonAsync(HttpMethod.Get, path, null, cancellationToken);
 
