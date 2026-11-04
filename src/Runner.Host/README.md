@@ -68,7 +68,7 @@ Run `deploy/install.ps1`. It needs no admin rights.
 
 | Item | Value |
 |---|---|
-| Program | `%LOCALAPPDATA%\Runnerpp` |
+| Program | `%LOCALAPPDATA%Runnerpp` |
 | Start | Shortcut "Runner Host" in the Startup folder. It runs `run-runner.ps1` hidden at log-on. |
 | Restart | `run-runner.ps1` starts the runner again 30 seconds after it stops |
 | Settings | User environment variables: `INBOX_TOKEN` (required), `Inbox__StorePath`, `Claude__WorkingDirectory`, `NOTION_API_TOKEN`. The script reads them at each start. |
