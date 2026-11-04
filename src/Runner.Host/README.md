@@ -62,6 +62,21 @@ The token comes from one of these sources. The environment variable has priority
 - Environment variable `INBOX_TOKEN`.
 - User secret `Inbox:Token`.
 
+## Install on Windows (current user)
+
+Run `deploy/install.ps1`. It needs no admin rights.
+
+| Item | Value |
+|---|---|
+| Program | `%LOCALAPPDATA%\Runnerpp` |
+| Start | Shortcut "Runner Host" in the Startup folder. It runs `run-runner.ps1` hidden at log-on. |
+| Restart | `run-runner.ps1` starts the runner again 30 seconds after it stops |
+| Settings | User environment variables: `INBOX_TOKEN` (required), `Inbox__StorePath`, `Claude__WorkingDirectory`, `NOTION_API_TOKEN`. The script reads them at each start. |
+| Logs | `runner.log` (current run), `runner.old.log` (previous run), `runner.err.log` |
+| Stop | Stop the `powershell.exe` that runs `run-runner.ps1`, then `Runner.Host.exe`. |
+
+`Claude__WorkingDirectory` must be a folder that Claude Code trusts, or `claude --bg` refuses to start.
+
 ## Run
 
 1. Go to `src/Runner.Host`.
