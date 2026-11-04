@@ -23,7 +23,7 @@ public sealed class TaskTests : IDisposable
 
     public TaskTests()
     {
-        _options = new TaskOptions { StatePath = _statePath };
+        _options = new TaskOptions { StatePath = _statePath, Mode = TaskRunMode.Background };
         _store = new TaskStore(Options.Create(_options));
         _notion.Page = TaskPage("Todo");
     }
@@ -47,7 +47,9 @@ public sealed class TaskTests : IDisposable
         }
         """).RootElement);
 
-    private TaskTodoStarted Handler() => new(_notion, _claude, _agents, _store, new PageCooldown(_time), _time,
+    private readonly FakeClaudePrint _print = new();
+
+    private TaskTodoStarted Handler() => new(_notion, _claude, _print, _agents, _store, new PageCooldown(_time), _time,
         Options.Create(_options), Options.Create(new ClaudeOptions { WorkingDirectory = @"C:\Projects" }))
     {
         LinkWait = TimeSpan.Zero,
@@ -184,6 +186,39 @@ public sealed class TaskTests : IDisposable
 
         Assert.Equal("In Review", Status(Assert.Single(_notion.Updates).Properties));
     }
+
+    [Fact]
+    public async Task Print_mode_runs_claude_in_the_window_and_sets_in_review()
+    {
+        _options.Mode = TaskRunMode.Print;
+        await Handler().HandleAsync(Events.Notion("properties_updated", Events.PageBody()), Events.Context());
+
+        Assert.Empty(_claude.Remote);
+        var run = Assert.Single(_print.Runs);
+        Assert.Equal(@"C:\Projects", run.Folder);
+        Assert.Contains("Task: Fix it", run.Prompt);
+        Assert.Equal("In Progress", Status(_notion.Updates[0].Properties));
+        var last = _notion.Updates[^1].Properties;
+        Assert.Equal("In Review", Status(last));
+        Assert.Contains("the task flow works", last["Result"]!.ToJsonString());
+        Assert.Empty(_store.All());
+    }
+
+    [Fact]
+    public async Task Print_mode_failure_moves_the_task_back()
+    {
+        _options.Mode = TaskRunMode.Print;
+        _print.Result = new ClaudeOutput(1, "boom");
+        await Assert.ThrowsAsync<PermanentFailureException>(() =>
+            Handler().HandleAsync(Events.Notion("properties_updated", Events.PageBody()), Events.Context()));
+
+        var last = _notion.Updates[^1].Properties;
+        Assert.Equal("Backlog", Status(last));
+        Assert.Contains("exit 1", last["Result"]!.ToJsonString());
+    }
+
+    [Fact]
+    public void Print_is_the_default_mode() => Assert.Equal(TaskRunMode.Print, new TaskOptions().Mode);
 
     [Fact]
     public void Agents_list_is_parsed()

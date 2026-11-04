@@ -120,6 +120,18 @@ internal sealed class FakeClaudeLauncher : IClaudeLauncher
     }
 }
 
+internal sealed class FakeClaudePrint : IClaudePrint
+{
+    public List<(string Prompt, string? Folder)> Runs { get; } = [];
+    public Runner.Handlers.Tasks.ClaudeOutput Result { get; set; } = new(0, "OK, the task flow works.");
+
+    public Task<Runner.Handlers.Tasks.ClaudeOutput> RunAsync(string prompt, string? workingDirectory, CancellationToken cancellationToken)
+    {
+        Runs.Add((prompt, workingDirectory));
+        return Task.FromResult(Result);
+    }
+}
+
 internal sealed class FakeTime : TimeProvider
 {
     public DateTimeOffset Now { get; set; } = new(2026, 11, 4, 12, 0, 0, TimeSpan.Zero);

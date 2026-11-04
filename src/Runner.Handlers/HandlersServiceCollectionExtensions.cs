@@ -40,6 +40,7 @@ public static class HandlersServiceCollectionExtensions
 
         services.AddOptions<TaskOptions>().Bind(configuration.GetSection(TaskOptions.Section));
         services.TryAddSingleton<IClaudeAgents, ClaudeAgents>();
+        services.TryAddSingleton<IClaudePrint, ClaudePrint>();
         services.TryAddSingleton<TaskStore>();
         services.AddHostedService<TaskSessionWatcher>();
 

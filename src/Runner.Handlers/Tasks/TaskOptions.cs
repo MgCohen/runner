@@ -7,6 +7,12 @@ public sealed class TaskOptions
 
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// <see cref="TaskRunMode.Print"/>: run <c>claude -p</c> in the runner window and wait for it (default).
+    /// <see cref="TaskRunMode.Background"/>: start a background Remote Control session; the watcher sets In Review.
+    /// </summary>
+    public TaskRunMode Mode { get; set; } = TaskRunMode.Print;
+
     /// <summary>The data source of the Tasks database (Workflow / Tasks).</summary>
     public string DataSourceId { get; set; } = "f0db2108-3a1e-4e80-8f74-f081643e0a29";
 
@@ -51,4 +57,10 @@ public sealed class TaskOptions
         - If you need a decision from the user, stop and ask it as your last message.
         - End with a short summary (at most 8 lines): what you did, links to PRs or files, and what the user must review.
         """;
+}
+
+public enum TaskRunMode
+{
+    Print,
+    Background,
 }

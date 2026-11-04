@@ -43,20 +43,12 @@ public sealed class PullRequestOpened(IClaudeLauncher claude) : IEventHandler
 
 ## Tasks
 
-A task in the Notion database Workflow / Tasks starts a Claude session when its status becomes **Todo**.
+A task in the Notion database Workflow / Tasks starts Claude when its status becomes **Todo**. `Handlers:Tasks:Mode` selects how.
 
-```
-Todo ──TaskTodoStarted──► In Progress ──TaskSessionWatcher──► In Review ──you──► Done
-          │                                   │
-          └─ claude --bg --remote-control     └─ session done, blocked or gone, or after MaxRunTime
-```
-
-| Step | What the runner does |
+| Mode | What the runner does |
 |---|---|
-| Status becomes Todo | Sets In Progress and `Started`, starts the session with the task page as the prompt, sets `Session` to the claude.ai link |
-| Session start fails | Sets Backlog and writes the error in `Result` |
-| Every 30 seconds | Reads `claude agents --json` for each running task |
-| Session ends | Sets In Review and `Finished`. `Result` gets the last answer of the session. |
+| `Print` (default) | Sets In Progress and `Started`. Runs `claude -p` in the runner window, with the task page as the prompt. Sets In Review, `Finished` and `Result` (the answer). On a failure: Backlog, with the error in `Result`. One task at a time. |
+| `Background` | Sets In Progress, starts `claude --bg --remote-control` and sets `Session` to the claude.ai link. `TaskSessionWatcher` reads `claude agents --json` every 30 seconds and sets In Review when the session is done, blocked or gone, or after `MaxRunTime`. |
 
 - The working folder is the `Folder` property of the task. If it is empty, the runner uses `Handlers:Tasks:WorkingDirectory`, then `Claude:WorkingDirectory`. The folder must be trusted by Claude Code.
 - A Notion event does not give the previous status. Each change to Todo starts a session, also from In Review.
