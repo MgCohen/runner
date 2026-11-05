@@ -486,5 +486,3 @@ $RECYCLE.BIN/
 *.db-shm
 *.db-wal
 
-# The VSA packages of the template PR, before its release (nuget.config).
-!vendor/vsa/*.nupkg

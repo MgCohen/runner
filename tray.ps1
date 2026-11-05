@@ -18,6 +18,8 @@ if (-not $env:Modules__Claude__WorkingDirectory) { $env:Modules__Claude__Working
 Write-Host "Claude folder: $env:Modules__Claude__WorkingDirectory"
 Write-Host "Runner in the tray app. Click the tray icon to open it. Stop with Exit in the tray menu."
 
+# GitHub Packages needs a token to restore the VSA packages (nuget.config).
+if (-not $env:GITHUB_TOKEN) { $env:GITHUB_TOKEN = gh auth token }
 $project = Join-Path $PSScriptRoot 'App\Host'
 dotnet build $project -v q --nologo | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "The build of $project failed. Run: dotnet build $project" }
