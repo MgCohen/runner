@@ -28,7 +28,11 @@ public sealed partial class HandlerLanes(HandlingStore store, HandlerCatalog cat
         while (!stoppingToken.IsCancellationRequested) {
             try {
                 await switches.WaitForListenerAsync(stoppingToken);
-                if (store.NextDue(handler) is { } item && store.Get(item.EventId) is { } stored) {
+                if (store.NextDue(handler) is { } item) {
+                    if (store.Get(item.EventId) is not { } stored) {
+                        store.RemovePending(item.EventId, handler);
+                        continue;
+                    }
                     await using var scope = scopes.CreateAsyncScope();
                     var events = scope.ServiceProvider.GetRequiredService<IIntegrationEventPublisher>();
                     await events.PublishAsync(new InboxEventDispatched(stored.Event.ToEvent(), handler, item.Attempts + 1), stoppingToken);

@@ -78,8 +78,9 @@ public sealed partial class HandlerSwitches {
     }, save: true);
 
     public void SetHandler(string key, bool on) {
-        var old = IsHandlerOn(key);
+        var fallback = catalog.Find(key)?.DefaultOn ?? true;
         Set(() => {
+            var old = handlers.TryGetValue(key, out var saved) ? saved : fallback;
             handlers[key] = on;
             return old != on;
         }, save: true);

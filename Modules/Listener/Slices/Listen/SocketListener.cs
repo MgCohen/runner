@@ -72,9 +72,12 @@ public sealed partial class SocketListener(
             await using var connection = await inbox.ConnectAsync(pause.Token);
             connected = true;
             traffic.Record(new TrafficEntry(start, "out", "connect", host, "/listen", "open", null, time.GetUtcNow() - start));
+            // The live push is at most once: a catch-up also runs at each interval while the socket is open.
+            var timer = CatchUpTimerAsync(pause.Token);
             while (await connection.ReceiveAsync(pause.Token) is { } message) {
                 await HandleAsync(message, host, onHello, pause.Token);
             }
+            _ = timer;
             traffic.Record(new TrafficEntry(time.GetUtcNow(), "in", "close", host, "/listen", "closed", null, null));
             return network.IsUp ? ListenerErrors.NotReachable : ListenerErrors.NoNetwork;
         } catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested || !switches.Listener) {
@@ -116,7 +119,7 @@ public sealed partial class SocketListener(
                     traffic.Record(new TrafficEntry(time.GetUtcNow(), "in", "message", host, "/listen", "ignored", message.Length, null));
                     break;
             }
-        } catch (JsonException e) {
+        } catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException) {
             traffic.Record(new TrafficEntry(time.GetUtcNow(), "in", "message", host, "/listen", "bad JSON", message.Length, null));
             BadMessage(log, e.Message);
         }
@@ -139,6 +142,16 @@ public sealed partial class SocketListener(
             }
         } catch (Exception e) when (e is HttpRequestException or JsonException or TaskCanceledException && !ct.IsCancellationRequested) {
             CatchUpFailed(log, e.Message);
+        }
+    }
+
+    async Task CatchUpTimerAsync(CancellationToken ct) {
+        try {
+            using var timer = new PeriodicTimer(options.CurrentValue.CatchUpInterval, time);
+            while (await timer.WaitForNextTickAsync(ct)) {
+                await CatchUpAsync(ct);
+            }
+        } catch (OperationCanceledException) {
         }
     }
 

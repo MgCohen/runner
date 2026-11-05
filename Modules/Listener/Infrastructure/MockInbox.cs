@@ -36,8 +36,8 @@ public sealed class MockInbox : IInboxSocket, INetworkState {
         }
     }
 
-    // Adds an event to the inbox and pushes it to the open socket. Returns its ID.
-    public long Send(string source, string? type, string? action, string payload) {
+    // Adds an event to the inbox and pushes it to the open socket. Returns its ID. Age: the event came that long ago.
+    public long Send(string source, string? type, string? action, string payload, TimeSpan? age = null) {
         long id;
         string json;
         lock (gate) {
@@ -48,7 +48,7 @@ public sealed class MockInbox : IInboxSocket, INetworkState {
                 ["delivery_id"] = Guid.NewGuid().ToString(),
                 ["event_type"] = type,
                 ["action"] = action,
-                ["received_at"] = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+                ["received_at"] = (DateTimeOffset.UtcNow - (age ?? TimeSpan.Zero)).ToString("o", CultureInfo.InvariantCulture),
                 ["payload"] = JsonNode.Parse(payload),
             }.ToJsonString();
             pending[id] = json;

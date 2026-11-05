@@ -37,7 +37,7 @@ public sealed class MockNotionHandler(MockNotion state) : HttpMessageHandler {
             return Json("""{"object":"page_markdown","markdown":"Mock task. Reply with OK."}""");
         }
         return Json($$"""
-            {"object":"page","id":"{{MockNotion.TaskPageId}}","url":"https://www.notion.so/mock-task",
+            {"object":"page","id":"{{MockNotion.TaskPageId}}","url":"https://www.notion.so/mock-task","token":"abc",
              "parent":{"type":"data_source_id","data_source_id":"{{MockNotion.TasksDataSource}}"},
              "properties":{
                "Name":{"type":"title","title":[{"plain_text":"Mock task"}] },

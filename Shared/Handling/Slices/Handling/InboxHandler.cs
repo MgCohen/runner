@@ -31,22 +31,26 @@ public abstract partial class InboxHandler(HandlerContext context) : Integration
             await Record(integrationEvent, ResultKind.Skipped, off, start, final: true);
             return;
         }
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeout.CancelAfter(Config.Timeout);
+        using var timeout = new CancellationTokenSource(Config.Timeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, timeout.Token);
+        (ResultKind Kind, string? Reason, bool Final) outcome;
         try {
-            await Run(e, timeout.Token);
-            await Record(integrationEvent, ResultKind.Done, null, start, final: true);
-        } catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-            await Record(integrationEvent, ResultKind.Cancelled, null, start, final: false);
-        } catch (OperationCanceledException) {
-            await Record(integrationEvent, ResultKind.Failed, "timeout", start, final: false);
+            await Run(e, linked.Token);
+            outcome = (ResultKind.Done, null, true);
+        } catch (Exception) when (ct.IsCancellationRequested) {
+            // Exit: the item stays pending, and this run does not count as an attempt.
+            outcome = (ResultKind.Cancelled, null, false);
+        } catch (OperationCanceledException) when (timeout.IsCancellationRequested) {
+            outcome = (ResultKind.Failed, "timeout", false);
         } catch (PermanentFailureException failure) {
             PermanentFailure(Log, failure, e.Id);
-            await Record(integrationEvent, ResultKind.Failed, failure.Message, start, final: true);
+            outcome = (ResultKind.Failed, failure.Message, true);
         } catch (Exception failure) {
             AttemptFailed(Log, failure, e.Id, integrationEvent.Attempt);
-            await Record(integrationEvent, ResultKind.Failed, failure.Message, start, final: false);
+            outcome = (ResultKind.Failed, failure.Message, false);
         }
+        // Outside the try: an error of the store or of a later handler is not a failure of this handler.
+        await Record(integrationEvent, outcome.Kind, outcome.Reason, start, outcome.Final);
     }
 
     protected abstract Task Run(InboxEvent e, CancellationToken ct);

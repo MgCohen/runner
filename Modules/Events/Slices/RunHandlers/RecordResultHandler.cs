@@ -1,5 +1,6 @@
 using Events.Infrastructure;
 using Events.Slices.Common;
+using Handling.Domain;
 using Handling.Infrastructure;
 using Handling.Slices.Handling;
 using Microsoft.Extensions.Options;
@@ -18,25 +19,25 @@ sealed class RecordResultHandler(HandlingStore store, LaneSignal lanes, IOptions
         if (store.PendingOf(id, handler) is not { } item) {
             return;
         }
+        EventStatus? finished;
         switch (integrationEvent.Result) {
             case "done" or "skipped":
-                store.RemovePending(id, handler);
+                finished = store.Complete(id, handler, final: false);
                 break;
             case "failed":
                 var attempts = item.Attempts + 1;
                 var retry = options.CurrentValue.Retry;
-                if (integrationEvent.Permanent || retry.IsLast(attempts)) {
-                    store.RemovePending(id, handler);
-                    store.MarkFinal(id, handler);
-                } else {
+                if (!integrationEvent.Permanent && !retry.IsLast(attempts)) {
                     store.Reschedule(id, handler, attempts, time.GetUtcNow() + retry.Delay(attempts));
+                    lanes.Wake(handler);
+                    return;
                 }
-                lanes.Wake(handler);
+                finished = store.Complete(id, handler, final: true);
                 break;
             default:
                 return;
         }
-        if (store.FinishIfComplete(id) is { } status) {
+        if (finished is { } status) {
             await events.PublishAsync(new EventFinished(id, status.ToString().ToLowerInvariant()), ct);
         }
     }

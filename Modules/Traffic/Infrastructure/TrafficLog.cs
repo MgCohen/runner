@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,9 @@ public sealed class TrafficLog(IOptionsMonitor<TrafficOptions> options) : ITraff
     public const string Hidden = "•••";
 
     static readonly string[] SecretKeys = ["token", "secret", "password", "authorization", "key"];
+
+    // The body is for a person to read: no escapes for non-ASCII text.
+    static readonly JsonSerializerOptions Readable = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     readonly Lock gate = new();
     readonly LinkedList<LoggedEntry> entries = [];
@@ -70,7 +74,7 @@ public sealed class TrafficLog(IOptionsMonitor<TrafficOptions> options) : ITraff
                 return body;
             }
             Hide(node);
-            return node.ToJsonString();
+            return node.ToJsonString(Readable);
         } catch (JsonException) {
             return body;
         }

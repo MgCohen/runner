@@ -28,7 +28,7 @@ sealed class SendMockEventHandler(IServiceProvider services) : RoutedHandler<Sen
                 id = inbox.Send("github", "push", null, """{"ref":"refs/heads/main","repository":{"full_name":"mock/repo"}}""");
                 break;
             case "custom" when request.Source is { Length: > 0 } source:
-                id = inbox.Send(source, request.Type, request.Action, request.Payload ?? "{}");
+                id = inbox.Send(source, request.Type, request.Action, request.Payload ?? "{}", TimeSpan.FromDays(request.AgeDays));
                 break;
             default:
                 return Task.FromResult<Result<SendMockEventResponse>>(new Error("listener.mock_kind", $"Unknown mock event kind '{request.Kind}'."));

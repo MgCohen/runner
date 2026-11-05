@@ -149,25 +149,28 @@ public sealed class HandlingStore {
         tx.Commit();
     }
 
-    public void MarkFinal(long id, string handler) {
-        using var db = Open();
-        Run(db, null, "UPDATE results SET final = 1 WHERE event_id = $id AND handler_key = $key", ("$id", id), ("$key", handler));
-    }
-
-    // If the event has no pending item, sets Done (no final failure) or Failed, and returns it. Else returns null.
-    public EventStatus? FinishIfComplete(long id) {
+    // The handler has a final result for the event: removes its pending item (final: also marks a failed result final).
+    // In the same transaction, an event with no pending item left becomes Done (no final failure) or Failed.
+    // Returns that new status, or null if the event still waits for a handler or another lane finished it.
+    public EventStatus? Complete(long id, string handler, bool final) {
         using var db = Open();
         using var tx = db.BeginTransaction();
-        if ((long)Scalar(db, "SELECT COUNT(*) FROM pending WHERE event_id = $id", ("$id", id), tx)! > 0) {
-            return null;
+        Run(db, tx, "DELETE FROM pending WHERE event_id = $id AND handler_key = $key", ("$id", id), ("$key", handler));
+        if (final) {
+            Run(db, tx, "UPDATE results SET final = 1 WHERE event_id = $id AND handler_key = $key", ("$id", id), ("$key", handler));
         }
-        var failed = (long)Scalar(db, "SELECT COUNT(*) FROM results WHERE event_id = $id AND kind = 'Failed' AND final = 1", ("$id", id), tx)! > 0;
-        var status = failed ? EventStatus.Failed : EventStatus.Done;
-        var now = Now();
-        Run(db, tx, "UPDATE events SET status = $s, finished_at = $now, next_ack_at = $now WHERE id = $id AND status = 'Pending'",
-            ("$s", status.ToString()), ("$now", now), ("$id", id));
+        EventStatus? finished = null;
+        if ((long)Scalar(db, "SELECT COUNT(*) FROM pending WHERE event_id = $id", ("$id", id), tx)! == 0) {
+            var failed = (long)Scalar(db, "SELECT COUNT(*) FROM results WHERE event_id = $id AND kind = 'Failed' AND final = 1", ("$id", id), tx)! > 0;
+            var status = failed ? EventStatus.Failed : EventStatus.Done;
+            var now = Now();
+            if (Run(db, tx, "UPDATE events SET status = $s, finished_at = $now, next_ack_at = $now WHERE id = $id AND status = 'Pending'",
+                ("$s", status.ToString()), ("$now", now), ("$id", id)) == 1) {
+                finished = status;
+            }
+        }
         tx.Commit();
-        return status;
+        return finished;
     }
 
     // The finished events that the inbox has not acked and whose ack time is reached.
@@ -191,13 +194,14 @@ public sealed class HandlingStore {
     public void ScheduleAckRetry(IEnumerable<long> ids, DateTimeOffset at) =>
         ForEach(ids, "UPDATE events SET next_ack_at = $at WHERE id = $id", ("$at", at.ToUnixTimeMilliseconds()));
 
-    // Deletes the finished events received before the time, with their results. Pending events stay.
+    // Deletes the acked events received before the time, with their results. Pending events and events that wait
+    // for their ack stay: the inbox would deliver them again, and their handlers would run again.
     public int Prune(DateTimeOffset before) {
         using var db = Open();
         using var tx = db.BeginTransaction();
         var limit = before.ToUnixTimeMilliseconds();
-        Run(db, tx, "DELETE FROM results WHERE event_id IN (SELECT id FROM events WHERE status <> 'Pending' AND received_at < $limit)", ("$limit", limit));
-        var count = Run(db, tx, "DELETE FROM events WHERE status <> 'Pending' AND received_at < $limit", ("$limit", limit));
+        Run(db, tx, "DELETE FROM results WHERE event_id IN (SELECT id FROM events WHERE status <> 'Pending' AND acked_at IS NOT NULL AND received_at < $limit)", ("$limit", limit));
+        var count = Run(db, tx, "DELETE FROM events WHERE status <> 'Pending' AND acked_at IS NOT NULL AND received_at < $limit", ("$limit", limit));
         tx.Commit();
         return count;
     }
@@ -247,7 +251,8 @@ public sealed class HandlingStore {
         var page = new List<(object Name, object? Value)>(values.Select(v => ((object)v.Name, v.Value)));
         var sql = new StringBuilder($"SELECT * FROM events e WHERE {where}");
         if (query.Before is { } before) {
-            sql.Append(" AND (e.received_at < (SELECT received_at FROM events WHERE id = $before) OR (e.received_at = (SELECT received_at FROM events WHERE id = $before) AND e.id < $before))");
+            sql.Append(" AND (e.received_at < (SELECT received_at FROM events WHERE id = $before) OR (e.received_at = (SELECT received_at FROM events WHERE id = $before) AND e.id < $before)"
+                + " OR ((SELECT received_at FROM events WHERE id = $before) IS NULL AND e.id < $before))");
             page.Add(("$before", before));
         }
         sql.Append(" ORDER BY e.received_at DESC, e.id DESC LIMIT $limit");

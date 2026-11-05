@@ -15,14 +15,21 @@ public sealed partial class AckService(InboxClient client, HandlingStore store, 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         var failures = 0;
         while (!stoppingToken.IsCancellationRequested) {
-            var batch = store.AckDue(BatchSize);
+            IReadOnlyList<long> batch;
+            try {
+                batch = store.AckDue(BatchSize);
+            } catch (Exception e) when (!stoppingToken.IsCancellationRequested) {
+                AckFailed(log, 0, TimeSpan.FromSeconds(5), e.Message);
+                await Task.Delay(TimeSpan.FromSeconds(5), time, stoppingToken);
+                continue;
+            }
             if (batch.Count > 0) {
                 try {
                     await client.ConsumeAsync(batch, stoppingToken);
                     store.MarkAcked(batch);
                     failures = 0;
                     continue;
-                } catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !stoppingToken.IsCancellationRequested) {
+                } catch (Exception e) when (!stoppingToken.IsCancellationRequested) {
                     var delay = AckRetry.Delay(failures++);
                     AckFailed(log, batch.Count, delay, e.Message);
                     store.ScheduleAckRetry(batch, time.GetUtcNow() + delay);

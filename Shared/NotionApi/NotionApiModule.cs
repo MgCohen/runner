@@ -14,8 +14,9 @@ public sealed class NotionApiModule : Module<NotionOptions> {
         var services = module.Services;
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<PageCooldown>();
-        services.AddSingleton(new NotionToken(settings.Token is { Length: > 0 } token ? token : module.Configuration["NOTION_API_TOKEN"]));
-        if (module.Configuration.GetValue<bool>("Runner:Mock")) {
+        var mock = module.Configuration.GetValue<bool>("Runner:Mock");
+        services.AddSingleton(new NotionToken(mock ? "mock-token" : settings.Token is { Length: > 0 } token ? token : module.Configuration["NOTION_API_TOKEN"]));
+        if (mock) {
             services.AddSingleton<MockNotion>();
             services.AddHttpClient<INotionClient, NotionClient>(http => http.BaseAddress = MockNotion.BaseAddress)
                 .ConfigurePrimaryHttpMessageHandler(provider => new MockNotionHandler(provider.GetRequiredService<MockNotion>()));

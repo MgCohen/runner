@@ -57,6 +57,12 @@ sealed partial class TaskTodoStarted(HandlerContext context, INotionClient notio
             } else {
                 await StartSessionAsync(page, prompt, directory, ct);
             }
+        } catch (Exception failure) when (failure is not PermanentFailureException) {
+            // Exit, a timeout or an error that can retry: the task goes back to Todo, so the next attempt or the
+            // next start runs it again. The change is a bot edit, so it starts nothing by itself.
+            using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await notion.UpdatePageAsync(pageId, new JsonObject { [o.StatusProperty] = NotionProperties.Status(o.TriggerStatus) }, limit.Token);
+            throw;
         } finally {
             cooldown.Release(key);
         }
