@@ -323,7 +323,7 @@ public sealed class SelfTest {
         });
     }
 
-    // A screenshot of each page, as the reference images of docs/specs/images.
+    // A screenshot of each page, in light and dark, for a review of the pages.
     async Task Screens(string theme) {
         await Click("[data-test=nav-home]");
         await Shot($"home-{theme}");
