@@ -55,4 +55,20 @@ public sealed class StartTests {
         Assert.That(app.Services.GetRequiredService<IAppMode>().Mock, Is.True);
         Assert.That(File.Exists(Path.Combine(app.Folder, "runner.log")), Is.True);
     }
+
+    [Test]
+    public void The_path_gets_the_saved_entries_that_the_process_does_not_have() {
+        var before = Environment.GetEnvironmentVariable("PATH");
+        try {
+            Environment.SetEnvironmentVariable("PATH", @"C:\runner-test");
+            Secrets.RefreshPath();
+            var entries = Environment.GetEnvironmentVariable("PATH")!.Split(';');
+
+            Assert.That(entries[0], Is.EqualTo(@"C:\runner-test"));
+            Assert.That(entries, Has.Some.EndsWith(@"\System32").IgnoreCase);
+            Assert.That(entries.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(entries.Length));
+        } finally {
+            Environment.SetEnvironmentVariable("PATH", before);
+        }
+    }
 }
