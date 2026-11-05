@@ -4,9 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Handling.Domain;
-using NotionApi.Domain;
+using Notion.Domain;
 
-namespace NotionApi.Infrastructure;
+namespace Notion.Infrastructure;
 
 // Reads and changes pages with the Notion API.
 public interface INotionClient {

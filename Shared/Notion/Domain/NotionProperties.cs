@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 
-namespace NotionApi.Domain;
+namespace Notion.Domain;
 
 // Builds property values for INotionClient.UpdatePageAsync.
 public static class NotionProperties {

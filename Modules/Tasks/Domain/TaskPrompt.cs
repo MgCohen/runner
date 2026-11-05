@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text;
-using NotionApi.Domain;
+using Notion.Domain;
 
 namespace Tasks.Domain;
 

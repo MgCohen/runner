@@ -1,6 +1,6 @@
 using Listener.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using NotionApi.Infrastructure;
+using Notion.Infrastructure;
 using VSA.Domain;
 using VSA.Handlers.Requests;
 

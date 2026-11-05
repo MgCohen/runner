@@ -3,7 +3,7 @@ using Dispatch.Domain;
 using Handling.Domain;
 using Listener.Domain;
 using Listener.Infrastructure;
-using NotionApi.Domain;
+using Notion.Domain;
 
 namespace App.Tests;
 

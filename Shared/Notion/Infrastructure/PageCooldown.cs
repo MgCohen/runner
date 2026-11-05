@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace NotionApi.Infrastructure;
+namespace Notion.Infrastructure;
 
 // Remembers in memory when a page last started work. One edit can send more than one event.
 public sealed class PageCooldown(TimeProvider time) {

@@ -67,9 +67,9 @@
     <Project Path="Shared/Handling/Projects/Handling.Infrastructure.csproj" />
     <Project Path="Shared/Network/Network.csproj" />
     <Project Path="Shared/Network/Projects/Network.Infrastructure.csproj" />
-    <Project Path="Shared/NotionApi/NotionApi.csproj" />
-    <Project Path="Shared/NotionApi/Projects/NotionApi.Domain.csproj" />
-    <Project Path="Shared/NotionApi/Projects/NotionApi.Infrastructure.csproj" />
+    <Project Path="Shared/Notion/Notion.csproj" />
+    <Project Path="Shared/Notion/Projects/Notion.Domain.csproj" />
+    <Project Path="Shared/Notion/Projects/Notion.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/App.Tests.csproj" />

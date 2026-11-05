@@ -21,7 +21,7 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 | `Modules/MockHandlers` | Test-only handlers, only in mock mode |
 | `Shared/Handling` | The event model, the SQLite store, the switches, `InboxHandler`, `HandlerConfig` |
 | `Shared/Network`, `Shared/AppSettings` | The traffic sink port; the settings parts of the modules |
-| `Shared/NotionApi`, `Shared/Claude` | The Notion client and the claude CLI, with their mocks |
+| `Shared/Notion`, `Shared/Claude` | The Notion client and the claude CLI, with their mocks |
 | `Tests` | NUnit: the VSA architecture rules, the event pipeline in mock mode, the helpers |
 | `vendor/vsa` | The VSA packages of vsa-template PR 32, before its release |
 

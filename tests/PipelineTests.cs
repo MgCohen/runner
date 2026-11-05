@@ -131,7 +131,7 @@ public sealed class PipelineTests {
     [Test]
     public async Task A2_a_task_event_runs_the_task_to_in_review() {
         await using var app = await TestApp.StartAsync();
-        var notion = (NotionApi.Infrastructure.MockNotion)app.Services.GetService(typeof(NotionApi.Infrastructure.MockNotion))!;
+        var notion = (Notion.Infrastructure.MockNotion)app.Services.GetService(typeof(Notion.Infrastructure.MockNotion))!;
         var id = (await app.Bus.Send(new Listener.Slices.SendMockEvent.SendMockEventRequest("task"))).Id;
 
         await app.UntilFinished(id, seconds: 20);

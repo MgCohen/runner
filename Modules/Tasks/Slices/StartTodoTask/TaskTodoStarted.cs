@@ -4,8 +4,8 @@ using Handling.Domain;
 using Handling.Slices.Handling;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NotionApi.Domain;
-using NotionApi.Infrastructure;
+using Notion.Domain;
+using Notion.Infrastructure;
 using Tasks.Domain;
 
 namespace Tasks.Slices.StartTodoTask;

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace NotionApi.Domain;
+namespace Notion.Domain;
 
 // The parts of a Notion page that handlers use. Raw holds the full API response.
 public sealed record NotionPage(string Id, string Title, string? Url, string? ParentDataSourceId, string? ParentDatabaseId, JsonElement Raw) {

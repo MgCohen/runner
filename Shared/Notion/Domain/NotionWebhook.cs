@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace NotionApi.Domain;
+namespace Notion.Domain;
 
 // Reads fields from a Notion webhook body. A Notion event has IDs only, not the page content.
 public static class NotionWebhook {

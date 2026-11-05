@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace NotionApi.Infrastructure;
+namespace Notion.Infrastructure;
 
 // Mock mode: one Notion task page, with its status and its result.
 public sealed class MockNotion {
