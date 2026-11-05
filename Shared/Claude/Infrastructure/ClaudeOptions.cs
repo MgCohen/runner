@@ -12,7 +12,4 @@ public sealed class ClaudeOptions {
     public string? WorkingDirectory { get; set; }
 
     public string PermissionMode { get; set; } = "auto";
-
-    // The maximum time for claude --bg to print the session ID.
-    public TimeSpan BackgroundStartTimeout { get; set; } = TimeSpan.FromMinutes(1);
 }

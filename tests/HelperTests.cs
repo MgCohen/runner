@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Claude.Infrastructure;
 using Dispatch.Domain;
 using Handling.Domain;
 using Listener.Domain;
@@ -10,32 +9,6 @@ namespace App.Tests;
 
 // The pure helpers, ported from the old Runner.Handlers.Tests and Runner.Host.Tests.
 public sealed class HelperTests {
-    [Test]
-    public void Background_id_comes_from_the_cli_output() =>
-        Assert.That(ClaudeLauncher.ParseBackgroundId("backgrounded · 1a2b3c\n"), Is.EqualTo("1a2b3c"));
-
-    [Test]
-    public void Background_id_is_null_when_the_output_has_none() => Assert.That(ClaudeLauncher.ParseBackgroundId("error"), Is.Null);
-
-    [Test]
-    public void Agents_list_is_parsed() {
-        var agents = ClaudeAgents.Parse("""[{"id":"a1","sessionId":"s1","state":"done"},{"x":1}]""");
-
-        Assert.That(agents, Is.EqualTo(new[] { new ClaudeAgent("a1", "s1", "done") }));
-    }
-
-    [Test]
-    public void Last_answer_is_the_last_assistant_text() {
-        string[] lines = [
-            """{"type":"assistant","message":{"content":[{"type":"text","text":"first"}]}}""",
-            """{"type":"user","message":{"content":[{"type":"text","text":"assistant"}]}}""",
-            """{"type":"assistant","message":{"content":[{"type":"text","text":"last"}]}}""",
-            "{\"assistant\" not json",
-        ];
-
-        Assert.That(ClaudeAgents.LastAnswer(lines), Is.EqualTo("last"));
-    }
-
     [TestCase("""{"authors":[{"type":"bot"}]}""", true)]
     [TestCase("""{"authors":[{"type":"person"}]}""", false)]
     [TestCase("""{}""", false)]

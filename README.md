@@ -17,7 +17,7 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 | `Modules/Events` | Store an event, the handler lanes, retries, clean-up, the event queries |
 | `Modules/Dispatch` | The sources, the switches, the handler queries |
 | `Modules/Traffic`, `Modules/Settings` | The traffic log; the settings file |
-| `Modules/Tasks`, `Modules/Notion`, `Modules/Diagnostics` | The business handlers |
+| `Modules/Tasks`, `Modules/Diagnostics` | The business handlers |
 | `Modules/MockHandlers` | Test-only handlers, only in mock mode |
 | `Shared/Handling` | The event model, the SQLite store, the switches, `InboxHandler`, `HandlerConfig` |
 | `Shared/Network`, `Shared/AppSettings` | The traffic sink port; the settings parts of the modules |
@@ -37,7 +37,7 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 
 Keep the terminal open: the logs and the output of `claude -p` show there. Stop the app with Exit in the tray menu. The tokens come from 1Password (`deploy/runner.secrets.env`) through `op run`.
 
-The data is in `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `tasks.json`, `selftest\`.
+The data is in `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `selftest\`.
 
 ## Add a handler
 

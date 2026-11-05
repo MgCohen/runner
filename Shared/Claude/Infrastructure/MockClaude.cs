@@ -1,7 +1,7 @@
 namespace Claude.Infrastructure;
 
 // Mock mode: a fake Claude. No process starts. The self-test can make a run slow, to test the exit (A28).
-public sealed class MockClaude : IClaudePrint, IClaudeLauncher, IClaudeAgents {
+public sealed class MockClaude : IClaudePrint {
     public const string Answer = "OK, the mock task flow works.";
 
     // The time of one mock run.
@@ -17,13 +17,4 @@ public sealed class MockClaude : IClaudePrint, IClaudeLauncher, IClaudeAgents {
         await Console.Out.WriteLineAsync(Answer);
         return new ClaudeOutput(0, Answer);
     }
-
-    public Task<ClaudeSession> StartRemoteSessionAsync(string prompt, string? workingDirectory, string name, CancellationToken ct) =>
-        Task.FromResult(new ClaudeSession("mock" + Guid.NewGuid().ToString("N")[..8], name));
-
-    public Task<IReadOnlyList<ClaudeAgent>> ListAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<ClaudeAgent>>([]);
-
-    public Task<string?> GetRemoteLinkAsync(string id, CancellationToken ct) => Task.FromResult<string?>(null);
-
-    public string? ReadLastAnswer(string sessionId) => Answer;
 }

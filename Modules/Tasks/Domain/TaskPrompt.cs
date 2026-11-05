@@ -25,13 +25,4 @@ public static class TaskPrompt {
             .ToString();
     }
 
-    // "task <title>", at most 40 characters of the title.
-    public static string SessionName(NotionPage page) {
-        ArgumentNullException.ThrowIfNull(page);
-        var title = new string([.. page.Title.Where(c => char.IsLetterOrDigit(c) || c is ' ' or '-')]).Trim();
-        if (title.Length > 40) {
-            title = title[..40].Trim();
-        }
-        return string.IsNullOrEmpty(title) ? "task" : $"task {title}";
-    }
 }

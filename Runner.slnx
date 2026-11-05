@@ -36,10 +36,6 @@
     <Project Path="Modules/MockHandlers/Projects/MockHandlers.Handlers.Events.csproj" />
     <Project Path="Modules/MockHandlers/Projects/MockHandlers.Handlers.Requests.csproj" />
     <Project Path="Modules/MockHandlers/Projects/MockHandlers.Infrastructure.csproj" />
-    <Project Path="Modules/Notion/Notion.csproj" />
-    <Project Path="Modules/Notion/Projects/Notion.Domain.csproj" />
-    <Project Path="Modules/Notion/Projects/Notion.Handlers.Events.csproj" />
-    <Project Path="Modules/Notion/Projects/Notion.Infrastructure.csproj" />
     <Project Path="Modules/Settings/Projects/Settings.Contracts.Events.csproj" />
     <Project Path="Modules/Settings/Projects/Settings.Contracts.Requests.csproj" />
     <Project Path="Modules/Settings/Projects/Settings.Domain.csproj" />

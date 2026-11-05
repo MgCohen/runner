@@ -19,12 +19,8 @@ public sealed class ClaudeModule : Module<ClaudeOptions> {
         if (module.Configuration.GetValue<bool>("Runner:Mock")) {
             services.AddSingleton<MockClaude>();
             services.AddSingleton<IClaudePrint>(provider => provider.GetRequiredService<MockClaude>());
-            services.AddSingleton<IClaudeLauncher>(provider => provider.GetRequiredService<MockClaude>());
-            services.AddSingleton<IClaudeAgents>(provider => provider.GetRequiredService<MockClaude>());
         } else {
             services.AddSingleton<IClaudePrint, ClaudePrint>();
-            services.AddSingleton<IClaudeLauncher, ClaudeLauncher>();
-            services.AddSingleton<IClaudeAgents, ClaudeAgents>();
         }
     }
 }

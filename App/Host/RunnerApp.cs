@@ -12,6 +12,9 @@ public static class RunnerApp {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = AppContext.BaseDirectory });
         var dataDir = start.DataFolder;
         Directory.CreateDirectory(dataDir);
+        if (start.Mock && start.SelfTest) {
+            ClearMockData(dataDir);
+        }
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> {
             ["Runner:Mock"] = start.Mock ? "true" : "false",
             ["Runner:Paused"] = start.Paused ? "true" : "false",
@@ -40,6 +43,13 @@ public static class RunnerApp {
 
     // The settings file is configuration: Modules:<module>:<key>. A broken file moves to settings.json.bad, and the
     // defaults apply. Returns the warning, or null.
+    // The mock self-test starts from an empty store: its checks count the events (A1, A25).
+    static void ClearMockData(string dataDir) {
+        foreach (var name in new[] { "inbox.db", "inbox.db-wal", "inbox.db-shm", "switches.json", "settings.json", "settings.json.bad" }) {
+            File.Delete(Path.Combine(dataDir, name));
+        }
+    }
+
     static string? AddSettingsFile(ConfigurationManager configuration, string path) {
         string? warning = null;
         if (File.Exists(path)) {

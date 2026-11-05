@@ -10,7 +10,7 @@ Cloudflare: inbox Worker ──contract A──► Listener and Events modules �
 |---|---|---|
 | Inbox | `MgCohen/inbox` | Webhooks, D1, hub, `/listen`, settled flag, cleanup |
 | Connector | `MgCohen/runner`, `Modules/Listener`, `Modules/Events`, `Shared/Handling` | Socket, catch-up, local store, handler lanes, ack |
-| Handlers | `MgCohen/runner`, business modules (`Modules/Tasks`, `Modules/Notion` …) | Business logic and its helpers |
+| Handlers | `MgCohen/runner`, business modules (`Modules/Tasks` …) | Business logic and its helpers |
 
 ## Contract A: inbox to connector
 
