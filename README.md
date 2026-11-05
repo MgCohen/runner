@@ -24,25 +24,58 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 | `Shared/Notion`, `Shared/Claude` | The Notion client and the claude CLI, with their mocks |
 | `Tests` | NUnit: the VSA architecture rules, the event pipeline in mock mode, the helpers |
 
-## Run
+## Install and use
 
-The VSA packages (vsa-template `0.1.0-preview.5`) come from GitHub Packages. GitHub Packages needs a token, also for public packages: `nuget.config` reads it from `GITHUB_TOKEN`. If `GITHUB_TOKEN` is empty, `tray.ps1` uses `gh auth token`. The `gh` token needs the `read:packages` scope (`gh auth refresh -s read:packages`). For `dotnet build` and `dotnet test`, set it first:
+Install the runner once, and again after each code change:
+
+```powershell
+.\install.ps1
+```
+
+`install.ps1` publishes `App.Host` to `%LOCALAPPDATA%\Runner\app` and adds a "Runner" shortcut to the desktop and to the Start menu. Start the runner with the shortcut. It opens in the tray, with no terminal.
+
+| Item | How it works |
+|---|---|
+| Tokens | Real mode: the app runs `op read` for each reference in `runner.secrets.env`. It needs `OP_SERVICE_ACCOUNT_TOKEN` in the user environment. |
+| `claude -p`, `op read` | The app opens a visible console window while they run, and closes it after (T3) |
+| Log | `runner.log` in the data folder. A start error goes to `%LOCALAPPDATA%\Runner\crash.log` and to a message box. |
+| Mode | Real or mock. Change it in Settings → App → Mock mode, in the tray menu, or with the CLI. A change restarts the app. The app keeps the mode after a restart. |
+| Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `runner.log`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
+
+The first start after an install can take some seconds more, because the virus scanner examines the new files.
+
+## CLI
+
+Commands go to the app that runs:
+
+```powershell
+$runner = "$env:LOCALAPPDATA\Runner\app\App.Host.exe"
+& $runner status | Out-String     # real|mock, the listener state, the process ID, the data folder
+& $runner mode mock | Out-String  # saves the mode, restarts the app in it, and shows the new status
+& $runner mode real | Out-String
+& $runner show | Out-String       # opens the widget
+& $runner quit | Out-String       # stops the app
+```
+
+`| Out-String` makes PowerShell wait for the command and show its output.
+
+## Run from the source
+
+The VSA packages (vsa-template `0.1.0-preview.5`) come from GitHub Packages. GitHub Packages needs a token, also for public packages: `nuget.config` reads it from `GITHUB_TOKEN`. If `GITHUB_TOKEN` is empty, `tray.ps1` and `install.ps1` use `gh auth token`. The `gh` token needs the `read:packages` scope (`gh auth refresh -s read:packages`). For `dotnet build` and `dotnet test`, set it first:
 
 ```powershell
 $env:GITHUB_TOKEN = gh auth token
 ```
 
 ```powershell
-.\tray.ps1                  # real mode; the listener starts as saved
-.\tray.ps1 -Paused          # real mode; the listener starts off
-.\tray.ps1 -Mock            # fake inbox, Notion and Claude; nothing leaves the PC
-.\tray.ps1 -Mock -SelfTest  # the mock self-test: 29 checks, screenshots, exit code
-.\tray.ps1 -SelfTest        # real mode, paused: screenshots of each page only
+.	ray.ps1                  # real mode; the listener starts as saved
+.	ray.ps1 -Paused          # real mode; the listener starts off
+.	ray.ps1 -Mock            # fake inbox, Notion and Claude; nothing leaves the PC
+.	ray.ps1 -Mock -SelfTest  # the mock self-test: 29 checks, screenshots, exit code
+.	ray.ps1 -SelfTest        # real mode, paused: screenshots of each page only
 ```
 
-Keep the terminal open: the logs and the output of `claude -p` show there. Stop the app with Exit in the tray menu. The tokens come from 1Password (`deploy/runner.secrets.env`) through `op run`.
-
-The data is in `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `selftest\`.
+A start from `tray.ps1` shows the log and the output of `claude -p` in that terminal. It does not use or change the saved mode. One app runs at a time: if the installed app runs, `tray.ps1` only shows its window. The self-test runs apart from the app.
 
 ## Add a handler
 

@@ -11,8 +11,8 @@ public interface IClaudePrint {
     Task<ClaudeOutput> RunAsync(string prompt, string? workingDirectory, CancellationToken ct);
 }
 
-// Runs claude -p as a child of this process, with no CreateNoWindow (requirement T3): its output shows in the window
-// that started the app. The prompt goes to stdin. A canceled token stops the process tree.
+// Runs claude -p as a child of this process, with no CreateNoWindow (requirement T3): its output shows in a visible
+// console window (VisibleConsole). The prompt goes to stdin. A canceled token stops the process tree.
 public sealed class ClaudePrint(IOptions<ClaudeOptions> options) : IClaudePrint {
     public async Task<ClaudeOutput> RunAsync(string prompt, string? workingDirectory, CancellationToken ct) {
         ArgumentNullException.ThrowIfNull(prompt);
@@ -26,6 +26,7 @@ public sealed class ClaudePrint(IOptions<ClaudeOptions> options) : IClaudePrint 
         foreach (var argument in new[] { "-p", "--permission-mode", o.PermissionMode }) {
             start.ArgumentList.Add(argument);
         }
+        using var console = VisibleConsole.Open("Runner · claude -p");
         await Console.Out.WriteLineAsync($"> claude -p --permission-mode {o.PermissionMode}   (folder: {start.WorkingDirectory})");
         using var process = Process.Start(start) ?? throw new InvalidOperationException($"Could not start '{o.Path}'.");
         try {

@@ -1,11 +1,22 @@
 @inherits PresenterComponent<Settings.Presenters.SettingsPresenter>
 @inject NavigationManager Nav
+@inject IAppMode Mode
 
 @* Settings (C5): a form from the schema of the modules. A change applies at once. *@
 <div class="back" data-test="back" @onclick="Back"><Icon Name="chevron-left" />Back</div>
 @if (Presenter.Load.Error is { } error) {
     <div class="error">@error</div>
 }
+<div class="gt">App</div>
+<div class="grp">
+    <div class="set" data-test="setting-mode">
+        <div class="grow">
+            <div>Mock mode</div>
+            <div class="small muted">Fake inbox, Notion and Claude, with separate data. A change restarts the app.</div>
+        </div>
+        <Switch On="Mode.Mock" Test="switch-mode" OnToggle="() => Mode.Switch(!Mode.Mock)" />
+    </div>
+</div>
 @foreach (var group in Presenter.Groups) {
     <div class="gt">@group.Name</div>
     <div class="grp">

@@ -25,10 +25,14 @@ public static class RunnerApp {
         // The terminal shows the runner, not each request of the views.
         builder.Logging.AddFilter("Microsoft", LogLevel.Warning).AddFilter("System.Net.Http", LogLevel.Warning)
             .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information).AddFilter("FastEndpoints", LogLevel.Warning);
+        // A shortcut start has no terminal: the log also goes to <data folder>/runner.log.
+        builder.Services.AddSingleton<ILoggerProvider>(_ => new FileLogProvider(dataDir));
         builder.AddVsa();
         builder.Services.AddSingleton<WidgetWindow>();
         builder.Services.AddSingleton<IWidgetWindow>(provider => provider.GetRequiredService<WidgetWindow>());
         builder.Services.AddSingleton<TrayService>();
+        builder.Services.AddSingleton(new AppMode(start.Mock));
+        builder.Services.AddSingleton<IAppMode>(provider => provider.GetRequiredService<AppMode>());
         if (start.Mock) {
             builder.Services.AddSingleton<SelfTestProbe>();
         }
