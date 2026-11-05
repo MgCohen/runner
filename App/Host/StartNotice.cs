@@ -1,10 +1,10 @@
 namespace App.Host;
 
-// The tray icon while the app starts. The start can take some minutes after an install, because the virus scanner
-// examines each new DLL when the app loads it. Without this icon, a shortcut start shows nothing for that time.
-// The icon has its own UI thread, as the main thread is busy with the start. TrayApp replaces it.
+// The yellow tray icon while the app starts, so that a shortcut start shows at once that the app runs.
+// A click on the icon, or a second start, shows the start message. The icon has its own UI thread, as the main
+// thread is busy with the start. TrayApp replaces it.
 public sealed class StartNotice : IDisposable {
-    const string Message = "The runner is starting. The first start after an install can take some minutes.";
+    const string Message = "The runner is starting. The widget opens when it is ready.";
 
     readonly Thread thread;
     readonly ManualResetEventSlim ready = new();
@@ -20,19 +20,17 @@ public sealed class StartNotice : IDisposable {
 
     public static StartNotice Show() => new();
 
-    // A second start while the app starts: show the message again.
-    public void Remind() => Ui(() => icon?.ShowBalloonTip(10_000, "Runner", Message, ToolTipIcon.Info));
+    // A second start while the app starts: show the message.
+    public void Remind() => Ui(ShowMessage);
+
+    void ShowMessage() => icon?.ShowBalloonTip(5_000, "Runner", Message, ToolTipIcon.Info);
 
     void Run() {
         ui = new Control();
         _ = ui.Handle;
-        var path = Environment.ProcessPath;
-        icon = new NotifyIcon {
-            Icon = path is null ? SystemIcons.Application : Icon.ExtractAssociatedIcon(path) ?? SystemIcons.Application,
-            Text = "Runner: starting",
-            Visible = true,
-        };
-        icon.ShowBalloonTip(10_000, "Runner", Message, ToolTipIcon.Info);
+        using var dot = TrayApp.Dot(TrayApp.Starting);
+        icon = new NotifyIcon { Icon = dot, Text = "Runner: starting", Visible = true };
+        icon.MouseClick += (_, _) => ShowMessage();
         ready.Set();
         Application.Run();
         icon.Visible = false;
