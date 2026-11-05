@@ -8,7 +8,7 @@ This repository is the local runner for the `inbox` Worker (`MgCohen/inbox`): on
 
 **VSA rules.** Modules meet only through requests and events, as the VSA layer map permits. Do not add references or `Compile` items to a module project by hand (`VSA0001`, `VSA0006`). A presenter does not publish events (`VSA1004`); it shows them with `IPresenterEvent<TEvent>`.
 
-**One visible process (T1–T3).** The runner runs in `App.Host`. Start no other process, except `claude -p`, and do not set `CreateNoWindow` on it. No start at log-on, no hidden process.
+**One visible process (T1–T3).** The runner runs in `App.Host`, and the user starts it (desktop shortcut or `tray.ps1`). Start no other process, except `claude -p` and `op read` (the tokens). Do not set `CreateNoWindow` on them: they write to a visible console (`VisibleConsole`). No start at log-on, no hidden process.
 
 **`Program.cs` is the exception.** `App/Host/Program.cs` adds the widget window and the tray icon. Change it only for the window, the tray or the start order (spec 4.5).
 
@@ -16,6 +16,6 @@ This repository is the local runner for the `inbox` Worker (`MgCohen/inbox`): on
 
 **Free only.** No paid services, packages or cloud resources. Local storage is SQLite.
 
-**No secrets in git.** Tokens come from 1Password through `op run` (`deploy/runner.secrets.env` holds references only). Never in code, settings, tests or docs.
+**No secrets in git.** Tokens come from 1Password through `op read` (`deploy/runner.secrets.env` holds references only). Never in code, settings, tests or docs.
 
 **Verify before you claim done.** `dotnet build Runner.slnx`, `dotnet test --solution Runner.slnx` and the mock self-test must pass.

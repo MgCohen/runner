@@ -38,6 +38,10 @@ public sealed class TrayApp : ApplicationContext {
             menu.Items.Add("Send mock task event", null, (_, _) => Safe(() => tray.SendMockAsync("task")));
             menu.Items.Add("Send mock GitHub event", null, (_, _) => Safe(() => tray.SendMockAsync("github")));
         }
+        var mode = app.Services.GetRequiredService<AppMode>();
+        if (!start.SelfTest) {
+            menu.Items.Add(mode.Mock ? "Switch to real mode" : "Switch to mock mode", null, (_, _) => mode.Switch(!mode.Mock));
+        }
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => Safe(ExitAsync));
         icon = new NotifyIcon { Icon = icons["Paused"], Text = "Runner", ContextMenuStrip = menu, Visible = true };

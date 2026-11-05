@@ -7,7 +7,7 @@ namespace App.Host;
 
 // The self-test (C8): it drives the real app through fixed steps, checks each result, and saves a screenshot of each
 // check. It starts paused (--selftest implies --paused, A1). Output: report.json and the screenshots in
-// %LOCALAPPDATA%\Runner\mock\selftest (real mode: ...\Runner\selftest-real). Exit code: 0 when all checks pass, else 1 (A37).
+// %LOCALAPPDATA%\Runner\selftest-mock\selftest (real mode: ...\Runner\selftest-real). Exit code: 0 when all checks pass, else 1 (A37).
 // Mock mode runs each check. Real mode only makes the screenshots of the pages, with the Claude handlers off.
 public sealed class SelfTest {
     static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };

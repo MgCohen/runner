@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <!--
     The one process of the runner (T1): the VSA modules, Kestrel on 127.0.0.1, the tray icon and the widget window.
-    A console-subsystem WinForms app: the process keeps the console of tray.ps1, so the logs and the output of the
-    claude -p child stay in that visible window (T3). DisableWinExeOutputInference keeps OutputType Exe.
+    A Windows app: the desktop shortcut starts it with no terminal. The log goes to runner.log. The children
+    (claude -p, op read) write to a visible console that the app opens while they run (VisibleConsole, T3).
+    A start from a terminal (tray.ps1) uses the console of that terminal.
   -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
@@ -14,9 +14,15 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <RootNamespace>App.Host</RootNamespace>
+    <!-- The icon of the exe: the desktop shortcut, the Start menu and the taskbar. -->
+    <ApplicationIcon>runner.ico</ApplicationIcon>
     <!-- LibraryImport for the window calls (drag, rounded corners). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- The op:// references of the tokens, not the tokens. Secrets reads them in real mode. -->
+    <None Include="../../deploy/runner.secrets.env" Link="runner.secrets.env" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
