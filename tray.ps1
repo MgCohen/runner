@@ -6,7 +6,7 @@
 #        -SelfTest            Runs the self-test and exits. It starts paused. Mock: 29 checks and screenshots in
 #                             %LOCALAPPDATA%\Runner\selftest-mock\selftest. Real: screenshots in %LOCALAPPDATA%\Runner\selftest-real.
 # The app gets its tokens from 1Password itself (op read, deploy/runner.secrets.env). The log and the output of
-# claude -p show in this window. The app also writes the log to runner.log in its data folder.
+# claude -p show in this window. The app also writes the log to logs\runner-YYYY-MM-DD.log in its data folder.
 # One app runs at a time: if the installed app runs, this start only shows its window. The self-test runs apart.
 param([switch] $Mock, [switch] $Paused, [switch] $SelfTest)
 $ErrorActionPreference = 'Stop'

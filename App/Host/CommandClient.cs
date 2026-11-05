@@ -47,7 +47,7 @@ public static partial class CommandClient {
                 return 0;
             }
         }
-        Console.Error.WriteLine("No answer in time. See %LOCALAPPDATA%\\Runner\\runner.log.");
+        Console.Error.WriteLine("No answer in time. See the log in %LOCALAPPDATA%\\Runner\\logs.");
         return 1;
     }
 
