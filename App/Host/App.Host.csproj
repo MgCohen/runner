@@ -41,4 +41,20 @@
     <PackageReference Include="VSA.Host" Version="0.1.0-preview.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.WindowsForms" Version="10.0.120" />
   </ItemGroup>
+  <ItemGroup>
+    <!--
+      The module roots, recorded in App.Host at build time (ModuleList). A one-file app (install.ps1) has no deps.json
+      that VSA ModuleDiscovery can read. A module root is the one project in the folder of the module.
+    -->
+    <RunnerModuleRoot Include="../../Modules/*/*.csproj;../../Shared/*/*.csproj" />
+  </ItemGroup>
+  <!-- In a target: MSBuild does not batch on item metadata outside a target. -->
+  <Target Name="RecordRunnerModules" BeforeTargets="GetAssemblyAttributes">
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>RunnerModule</_Parameter1>
+        <_Parameter2>%(RunnerModuleRoot.Filename)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
 </Project>

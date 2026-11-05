@@ -32,7 +32,7 @@ Install the runner once, and again after each code change:
 .\install.ps1
 ```
 
-`install.ps1` publishes `App.Host` to `%USERPROFILE%\Apps\Runner` and adds a "Runner" shortcut to the desktop and to the Start menu. Start the runner with the shortcut. It opens in the tray, with no terminal.
+`install.ps1` publishes `App.Host` as one file to `%USERPROFILE%\Apps\Runner` and adds a "Runner" shortcut to the desktop and to the Start menu. Start the runner with the shortcut. It opens in the tray, with no terminal.
 
 The app is not in `AppData`. A packaged app, for example the Claude desktop app, writes `AppData` to its own private folder, and Explorer does not see files there. If such an app runs `install.ps1`, the Start menu shortcut also goes to that private folder. The desktop shortcut works in all cases.
 
@@ -44,7 +44,7 @@ The app is not in `AppData`. A packaged app, for example the Claude desktop app,
 | Mode | Real or mock. Change it in Settings → App → Mock mode, in the tray menu, or with the CLI. A change restarts the app. The app keeps the mode after a restart. |
 | Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `runner.log`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
 
-`install.ps1` copies only the files that changed, then runs `App.Host.exe warmup`: it loads each DLL one time, so the virus scanner examines the new DLLs during the install and not at the first start. The warm-up of a full install takes some minutes. While the app starts, the tray shows a yellow Runner icon with the tooltip "Runner: starting". A click on it, or a second click on the shortcut, shows the start message.
+The installed app is one file: `install.ps1` publishes with `PublishSingleFile`. The virus scanner examines each new DLL when a process loads it, and the source has more than 100 project DLLs. The bundle keeps each project as its own assembly inside `App.Host.exe`, so the scanner examines one file. The source, the tests and `tray.ps1` keep the projects. A one-file app has no `deps.json` that VSA module discovery can read, so the build records the module roots in `App.Host` (`ModuleList`). Then `install.ps1` copies only the files that changed and runs `App.Host.exe warmup`, so the scan occurs during the install. While the app starts, the tray shows a yellow Runner icon with the tooltip "Runner: starting". A click on it, or a second click on the shortcut, shows the start message.
 
 A shortcut start gets the PATH of Explorer, which can be older than the saved PATH. The app adds the saved machine and user PATH entries, so it finds `op` and `claude`.
 
