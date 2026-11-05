@@ -30,6 +30,10 @@ public static class Program {
         if (CommandClient.IsCommand(args)) {
             return CommandClient.Run(args);
         }
+        // install.ps1: load each DLL one time, so the virus scan occurs at install time.
+        if (args is ["warmup"]) {
+            return Warmup.Run();
+        }
         // A start from a terminal (tray.ps1) keeps its output in that terminal. A shortcut start has no console.
         ParentConsole.Attach();
         var start = StartOptions.Parse(args);

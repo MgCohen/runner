@@ -1,7 +1,8 @@
-# Installs the runner as a desktop app. Run it once, and again after each code change.
+﻿# Installs the runner as a desktop app. Run it once, and again after each code change.
 #   1. Publishes App/Host to %USERPROFILE%\Apps\Runner.
-#   2. Stops the app, if it runs (App.Host.exe quit), and puts the new files in place.
-#   3. Adds the "Runner" shortcut to the desktop and to the Start menu.
+#   2. Stops the app, if it runs (App.Host.exe quit), and copies only the changed files.
+#   3. Loads each DLL one time (App.Host.exe warmup), so the virus scan occurs now and not at the first start.
+#   4. Adds the "Runner" shortcut to the desktop and to the Start menu.
 # Then start the runner with the shortcut, as any other app. The app gets its tokens itself (op read), so it needs
 # OP_SERVICE_ACCOUNT_TOKEN in the user environment. The mode (real or mock) is a setting of the app.
 # The data stays in %LOCALAPPDATA%\Runner.
@@ -23,7 +24,8 @@ $exe = Join-Path $app 'App.Host.exe'
 # Publish to a staging folder first, so a failed build keeps the installed app.
 New-Item -ItemType Directory -Force $apps | Out-Null
 if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
-dotnet publish (Join-Path $PSScriptRoot 'App\Host') -c Release -o $staging --nologo -v q
+# ContinuousIntegrationBuild: the source paths in the DLLs do not depend on the folder of the clone.
+dotnet publish (Join-Path $PSScriptRoot 'App\Host') -c Release -o $staging --nologo -v q -p:ContinuousIntegrationBuild=true
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed. The installed app did not change.' }
 
 # Stop the app that runs, from any folder: "quit" goes to the app on a named pipe and waits until it has stopped.
@@ -47,8 +49,31 @@ foreach ($name in 'run-runner.ps1', 'runner-host.db', 'runner-host.db-shm', 'run
 $oldApp = Join-Path $data 'app'
 if (Test-Path $oldApp) { Remove-Item $oldApp -Recurse -Force -ErrorAction SilentlyContinue }
 
-if (Test-Path $app) { Remove-Item $app -Recurse -Force }
-Move-Item $staging $app
+# Copy only the files that changed, and keep the others as they are. The build is deterministic, so a module
+# that did not change gives the same bytes, and the virus scanner does not examine its DLL again.
+New-Item -ItemType Directory -Force $app | Out-Null
+$copied = 0
+foreach ($file in Get-ChildItem $staging -Recurse -File) {
+    $relative = $file.FullName.Substring($staging.Length + 1)
+    $target = Join-Path $app $relative
+    if ((Test-Path $target) -and (Get-FileHash $target).Hash -eq (Get-FileHash $file.FullName).Hash) { continue }
+    New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+    Copy-Item $file.FullName $target -Force
+    $copied++
+}
+$removed = 0
+foreach ($file in Get-ChildItem $app -Recurse -File) {
+    if (-not (Test-Path (Join-Path $staging $file.FullName.Substring($app.Length + 1)))) {
+        Remove-Item $file.FullName -Force
+        $removed++
+    }
+}
+Remove-Item $staging -Recurse -Force
+Write-Host "$copied files changed, $removed files removed."
+
+# The virus scanner examines each new DLL when a process loads it. The warm-up loads each DLL one time now,
+# so the first start of the app does not wait for the scan.
+& $exe warmup | Out-Host
 
 $shell = New-Object -ComObject WScript.Shell
 foreach ($folder in [Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) {
@@ -62,7 +87,6 @@ foreach ($folder in [Environment]::GetFolderPath('Desktop'), [Environment]::GetF
     $link.Save()
 }
 Write-Host "Installed in $app. Start it with the Runner shortcut on the desktop or in the Start menu."
-Write-Host 'The first start after an install can take some minutes: the virus scanner examines the new files.'
 if ($wasRunning) {
     Write-Host 'The app ran before the install. Start it again with the shortcut.'
 }

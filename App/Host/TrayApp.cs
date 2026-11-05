@@ -4,9 +4,12 @@ using App.Views;
 namespace App.Host;
 
 // The tray icon and the widget (C6). The icon shows the listener state: green (connected), amber (connecting),
-// gray (paused), red (error). Left click: open or hide the widget. Right click: the tray menu.
+// gray (paused), red (error), yellow while the app starts. Left click: open or hide the widget. Right click: the tray menu.
 // Exit: stop the app (the hosted services cancel the running handlers), then close the window and the icon.
 public sealed class TrayApp : ApplicationContext {
+    // Yellow: the app starts (StartNotice). The other colors are the listener states.
+    internal static readonly Color Starting = Color.FromArgb(0xf5, 0xc5, 0x18);
+
     static readonly Dictionary<string, Color> Colors = new() {
         ["Connected"] = Color.FromArgb(0x2f, 0x7d, 0x32),
         ["Connecting"] = Color.FromArgb(0xd8, 0x8c, 0x1a),
@@ -152,7 +155,7 @@ public sealed class TrayApp : ApplicationContext {
     }
 
     // A 16 × 16 dot of the state color, with a white ring.
-    static Icon Dot(Color color) {
+    internal static Icon Dot(Color color) {
         using var bitmap = new Bitmap(16, 16);
         using (var g = Graphics.FromImage(bitmap)) {
             g.SmoothingMode = SmoothingMode.AntiAlias;
