@@ -22,8 +22,11 @@ if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed. The installed app did n
 # Stop the installed app. "quit" waits until it has stopped.
 $wasRunning = $false
 if (Test-Path $exe) {
-    & $exe quit | Out-Host
+    # "quit" writes to stderr when the app does not run. Windows PowerShell 5.1 with 'Stop' makes that an error.
+    $ErrorActionPreference = 'Continue'
+    & $exe quit 2>$null | Out-Host
     $wasRunning = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = 'Stop'
     Get-Process -Name 'App.Host' -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe } | Wait-Process -Timeout 20 -ErrorAction SilentlyContinue
 }
 
@@ -58,3 +61,4 @@ Write-Host "Installed in $app. Start it with the Runner shortcut on the desktop 
 if ($wasRunning) {
     Write-Host 'The app ran before the install. Start it again with the shortcut.'
 }
+exit 0
