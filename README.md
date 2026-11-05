@@ -26,7 +26,7 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 
 ## Run
 
-The VSA packages (vsa-template `0.1.0-preview.4`) come from GitHub Packages. GitHub Packages needs a token, also for public packages: `nuget.config` reads it from `GITHUB_TOKEN`. If `GITHUB_TOKEN` is empty, `tray.ps1` uses `gh auth token`. The `gh` token needs the `read:packages` scope (`gh auth refresh -s read:packages`). For `dotnet build` and `dotnet test`, set it first:
+The VSA packages (vsa-template `0.1.0-preview.5`) come from GitHub Packages. GitHub Packages needs a token, also for public packages: `nuget.config` reads it from `GITHUB_TOKEN`. If `GITHUB_TOKEN` is empty, `tray.ps1` uses `gh auth token`. The `gh` token needs the `read:packages` scope (`gh auth refresh -s read:packages`). For `dotnet build` and `dotnet test`, set it first:
 
 ```powershell
 $env:GITHUB_TOKEN = gh auth token

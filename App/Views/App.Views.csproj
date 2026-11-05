@@ -10,6 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../Modules/*/Projects/*.Presenters.csproj" PrivateAssets="all" />
-    <PackageReference Include="VSA.Views" Version="0.1.0-preview.4" />
+    <PackageReference Include="VSA.Views" Version="0.1.0-preview.5" />
   </ItemGroup>
 </Project>
