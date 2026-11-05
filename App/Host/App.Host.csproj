@@ -32,7 +32,7 @@
     <!-- No PrivateAssets: a test project that references the host also gets the module layers. -->
     <ProjectReference Include="../Views/App.Views.csproj" />
     <ProjectReference Include="../../Modules/*/*.csproj" />
-    <PackageReference Include="VSA.Host" Version="0.1.0-main.1" />
+    <PackageReference Include="VSA.Host" Version="0.1.0-preview.4" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.WindowsForms" Version="10.0.120" />
   </ItemGroup>
 </Project>

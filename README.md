@@ -23,9 +23,14 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 | `Shared/Network`, `Shared/AppSettings` | The traffic sink port; the settings parts of the modules |
 | `Shared/Notion`, `Shared/Claude` | The Notion client and the claude CLI, with their mocks |
 | `Tests` | NUnit: the VSA architecture rules, the event pipeline in mock mode, the helpers |
-| `vendor/vsa` | The VSA packages of vsa-template main (06daea4), before its release |
 
 ## Run
+
+The VSA packages (vsa-template `0.1.0-preview.4`) come from GitHub Packages. GitHub Packages needs a token, also for public packages: `nuget.config` reads it from `GITHUB_TOKEN`. If `GITHUB_TOKEN` is empty, `tray.ps1` uses `gh auth token`. The `gh` token needs the `read:packages` scope (`gh auth refresh -s read:packages`). For `dotnet build` and `dotnet test`, set it first:
+
+```powershell
+$env:GITHUB_TOKEN = gh auth token
+```
 
 ```powershell
 .\tray.ps1                  # real mode; the listener starts as saved
