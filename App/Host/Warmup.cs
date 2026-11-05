@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 
 namespace App.Host;
 
-// App.Host.exe warmup: install.ps1 runs it after it copies the files. It loads each DLL of the app one time and
-// exits, with no window. The virus scanner examines a new DLL when a process loads it, so the scan occurs at
+// App.Host.exe warmup: install.ps1 runs it after it copies the files. It loads each DLL file of the app one time
+// and exits, with no window. In the one-file app, these are the native DLLs, and the start of the exe itself. The virus scanner examines a new DLL when a process loads it, so the scan occurs at
 // install time and not at the first start. A native DLL of another processor type (runtimes\<rid>) is not loaded.
 public static class Warmup {
     public static int Run() {

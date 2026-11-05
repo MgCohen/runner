@@ -27,7 +27,8 @@ public static class RunnerApp {
             .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information).AddFilter("FastEndpoints", LogLevel.Warning);
         // A shortcut start has no terminal: the log also goes to <data folder>/runner.log.
         builder.Services.AddSingleton<ILoggerProvider>(_ => new FileLogProvider(dataDir));
-        builder.AddVsa();
+        // The module list of the build, not deps.json: the installed app is one file (ModuleList).
+        builder.AddVsa(ModuleList.Create());
         builder.Services.AddSingleton<WidgetWindow>();
         builder.Services.AddSingleton<IWidgetWindow>(provider => provider.GetRequiredService<WidgetWindow>());
         builder.Services.AddSingleton<TrayService>();

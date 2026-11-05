@@ -71,4 +71,13 @@ public sealed class StartTests {
             Environment.SetEnvironmentVariable("PATH", before);
         }
     }
+
+    [Test]
+    public void The_module_list_of_the_build_has_the_modules_that_VSA_discovery_finds() {
+        var built = ModuleList.Create().Select(m => m.GetType().FullName).ToArray();
+        var discovered = VSA.Module.ModuleDiscovery.CreateModules(VSA.Module.ModuleDiscovery.FindRoots()).Select(m => m.GetType().FullName).ToArray();
+
+        Assert.That(built, Is.Not.Empty);
+        Assert.That(built, Is.EqualTo(discovered));
+    }
 }
