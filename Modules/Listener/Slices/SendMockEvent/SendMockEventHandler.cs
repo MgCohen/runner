@@ -24,6 +24,16 @@ sealed class SendMockEventHandler(IServiceProvider services) : RoutedHandler<Sen
                 id = inbox.Send("notion", "page", "properties_updated",
                     $$"""{"type":"page.properties_updated","entity":{"id":"{{MockNotion.TaskPageId}}","type":"page"},"authors":[{"id":"mock-user","type":"person"}]}""");
                 break;
+            case "question":
+                if (services.GetService<MockNotion>() is { } blocked) {
+                    blocked.Status = "Waiting";
+                    blocked.TaskHasQuestion = true;
+                    blocked.QuestionStatus = "Answered";
+                    blocked.Answer = "Use option A.";
+                }
+                id = inbox.Send("notion", "page", "properties_updated",
+                    $$"""{"type":"page.properties_updated","entity":{"id":"{{MockNotion.QuestionPageId}}","type":"page"},"authors":[{"id":"mock-user","type":"person"}]}""");
+                break;
             case "github":
                 id = inbox.Send("github", "push", null, """{"ref":"refs/heads/main","repository":{"full_name":"mock/repo"}}""");
                 break;

@@ -18,6 +18,16 @@ public sealed class HelperTests {
     }
 
     [Test]
+    public void RelationOf_reads_the_page_ids_of_a_relation() {
+        using var doc = JsonDocument.Parse("""
+            {"id":"p","properties":{"Blocks":{"type":"relation","relation":[{"id":"a"},{"id":"b"}]},"Name":{"type":"title","title":[]}}}
+            """);
+        var page = NotionPage.FromJson(doc.RootElement);
+        Assert.That(page.RelationOf("Blocks"), Is.EqualTo(new[] { "a", "b" }));
+        Assert.That(page.RelationOf("Missing"), Is.Empty);
+    }
+
+    [Test]
     public void Entity_id_and_normalize_id() {
         using var doc = JsonDocument.Parse("""{"entity":{"id":"40E9-1E24"}}""");
 

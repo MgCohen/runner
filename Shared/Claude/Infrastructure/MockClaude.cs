@@ -9,9 +9,13 @@ public sealed class MockClaude : IClaudePrint {
 
     public int Runs { get; private set; }
 
+    // The prompt of the last run.
+    public string LastPrompt { get; private set; } = "";
+
     public async Task<ClaudeOutput> RunAsync(string prompt, string? workingDirectory, CancellationToken ct) {
         ArgumentNullException.ThrowIfNull(prompt);
         Runs++;
+        LastPrompt = prompt;
         await Console.Out.WriteLineAsync($"> [mock] claude -p   (prompt: {prompt.Length} chars)");
         await Task.Delay(Delay, ct);
         await Console.Out.WriteLineAsync(Answer);
