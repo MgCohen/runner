@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "vsa.cli": {
+      "version": "0.1.0-pr32.1",
+      "commands": [
+        "vsa"
+      ],
+      "rollForward": false
+    }
+  }
+}
