@@ -1,0 +1,47 @@
+@inherits PresenterComponent<Dispatch.Presenters.SourcesPresenter>
+@inject NavigationManager Nav
+
+@* Home (C2): one foldable card for each source, in the order of the inbox source list. *@
+<SearchBar Placeholder="Search sources and handlers" Value="@Presenter.Query" OnSearch="Search" />
+@{ var visible = Presenter.Visible.ToList(); }
+@if (Presenter.Load.Error is { } error) {
+    <div class="error">@error</div>
+}
+@if (visible.Count == 0 && Presenter.Sources.Count > 0) {
+    <div class="empty">No sources or handlers match</div>
+}
+@foreach (var (source, handlers) in visible) {
+    var open = Presenter.IsOpen(source.Name);
+    <div class="sec" data-test="source-@source.Name">
+        <div class="sh" @onclick="() => Presenter.ToggleFold(source.Name)">
+            <span class="muted"><Icon Name="@(open ? "chevron-down" : "chevron-right")" /></span>
+            <span class="secondary"><Icon Name="@Icon.ForSource(source.Name)" Size="18" /></span>
+            <div class="grow">
+                <div class="strong">@source.Name</div>
+                <div class="small muted">@source.Handlers.Count handlers · @Format.Count(source.Events) events</div>
+            </div>
+            <Switch On="source.On" OnToggle="() => Presenter.SetSourceAsync(source.Name, !source.On)" Test="@($"source-switch-{source.Name}")" />
+        </div>
+        @if (open) {
+            @if (handlers.Count == 0) {
+                <div class="hc none">No handlers yet</div>
+            }
+            @foreach (var handler in handlers) {
+                <div class="hc" data-test="handler-@handler.Name" @onclick="() => Nav.NavigateTo(HandlerDetail.Link(handler.Key))">
+                    <div class="grow">
+                        <div class="ell">@handler.Name</div>
+                        <div class="small secondary ell">Last: @handler.Last</div>
+                    </div>
+                    <Switch On="handler.On" OnToggle="() => Presenter.SetHandlerAsync(handler.Key, !handler.On)" Test="@($"handler-switch-{handler.Name}")" />
+                    <span class="muted"><Icon Name="chevron-right" /></span>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
+
+    void Search(string query) => Presenter.Search(query);
+}

@@ -1,0 +1,17 @@
+@inherits PresenterComponent<Settings.Presenters.SettingsPresenter>
+@inject IJSRuntime Js
+
+@* Sets the theme of the page root: no attribute for System, data-theme for the others, and the theme file of a custom theme. *@
+
+@code {
+    string? applied;
+
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (Presenter.Groups.Count > 0 && Presenter.Theme != applied) {
+            applied = Presenter.Theme;
+            await Js.InvokeVoidAsync("runner.setTheme", applied);
+        }
+    }
+}

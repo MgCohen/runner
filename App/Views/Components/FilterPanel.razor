@@ -1,0 +1,16 @@
+@* The filter panel of the Inbox and Traffic pages. Max height 420; the body scrolls and the footer stays visible. *@
+<div class="pop" data-test="filter-panel">
+    <div class="pb">@ChildContent</div>
+    <div class="pf">
+        <span class="lnk" data-test="clear-all" @onclick="OnClear">Clear all</span>
+        <span class="lnk" data-test="filter-done" @onclick="OnDone">Done</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public EventCallback OnClear { get; set; }
+
+    [Parameter] public EventCallback OnDone { get; set; }
+}

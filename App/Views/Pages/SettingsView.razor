@@ -1,0 +1,42 @@
+@inherits PresenterComponent<Settings.Presenters.SettingsPresenter>
+@inject NavigationManager Nav
+
+@* Settings (C5): a form from the schema of the modules. A change applies at once. *@
+<div class="back" data-test="back" @onclick="Back"><Icon Name="chevron-left" />Back</div>
+@if (Presenter.Load.Error is { } error) {
+    <div class="error">@error</div>
+}
+@foreach (var group in Presenter.Groups) {
+    <div class="gt">@group.Name</div>
+    <div class="grp">
+        @foreach (var row in group.Rows) {
+            <div class="set" data-test="setting-@row.Key">
+                <div class="grow">
+                    <div>@row.Label@if (row.Later) {<span class="tag">later</span>}</div>
+                    @if (row.Description is { } description) {
+                        <div class="small muted">@description</div>
+                    }
+                </div>
+                @switch (row.Kind) {
+                    case "Switch":
+                        <Switch On="@(row.Value == "true")" Disabled="row.Later" Test="@($"switch-{row.Key}")"
+                                OnToggle="@(() => Presenter.SetAsync(row.Key, row.Value == "true" ? "false" : "true"))" />
+                        break;
+                    case "Choice":
+                        <Segmented Options="row.Options" Value="@row.Value" Test="@row.Key" OnSelect="v => Presenter.SetAsync(row.Key, v)" />
+                        break;
+                    default:
+                        <span class="secondary small ell">@row.Value</span>
+                        break;
+                }
+            </div>
+        }
+    </div>
+}
+<div class="spacer"></div>
+
+@code {
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
+
+    void Back() => Nav.NavigateTo("");
+}

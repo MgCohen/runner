@@ -1,0 +1,9 @@
+<div class="back" data-test="back" @onclick="() => Nav.NavigateTo(Href)"><Icon Name="chevron-left" />@Label</div>
+
+@code {
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+}

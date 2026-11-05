@@ -1,0 +1,10 @@
+@page "/traffic/{Seq:long}"
+@inject Traffic.Presenters.TrafficPresenter Presenter
+
+<TrafficDetailView Presenter="Presenter" Seq="Seq" />
+
+@code {
+    [Parameter] public long Seq { get; set; }
+
+    public static string Link(long seq) => $"traffic/{seq}";
+}

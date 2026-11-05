@@ -1,0 +1,17 @@
+@* A switch: off, on, disabled. 34 × 20 with a round knob. A click does not start a window drag. *@
+<div class="sw @(On ? "on" : "") @(Disabled ? "dis" : "")" role="switch" aria-checked="@(On ? "true" : "false")" title="@Title"
+     data-test="@Test" @onclick="Click" @onclick:stopPropagation="true" @onmousedown:stopPropagation="true"></div>
+
+@code {
+    [Parameter] public bool On { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public string? Title { get; set; }
+
+    [Parameter] public string? Test { get; set; }
+
+    [Parameter] public EventCallback OnToggle { get; set; }
+
+    Task Click() => Disabled ? Task.CompletedTask : OnToggle.InvokeAsync();
+}

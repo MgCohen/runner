@@ -1,0 +1,11 @@
+@* The root component of the widget. The host page is App.Host/wwwroot/index.html. *@
+<Router AppAssembly="typeof(Main).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(WidgetLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(WidgetLayout)">
+            <div class="empty">This page does not exist.</div>
+        </LayoutView>
+    </NotFound>
+</Router>

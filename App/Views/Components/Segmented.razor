@@ -1,0 +1,16 @@
+@* A segmented control: one option on. *@
+<span class="seg" data-test="seg-@Test">
+    @foreach (var option in Options) {
+        <span class="@(string.Equals(option, Value, StringComparison.OrdinalIgnoreCase) ? "on" : "")" data-test="opt-@option" @onclick="() => OnSelect.InvokeAsync(option)">@option</span>
+    }
+</span>
+
+@code {
+    [Parameter] public IReadOnlyList<string> Options { get; set; } = [];
+
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public string? Test { get; set; }
+
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+}

@@ -1,0 +1,18 @@
+@page "/handlers/{Key}"
+@inject Dispatch.Presenters.SourcesPresenter Sources
+@inject Events.Presenters.InboxPresenter Inbox
+@inject NavigationManager Nav
+
+<HandlerDetailView Presenter="Sources" Key="@Key" OnOpenInbox="OpenInbox" />
+
+@code {
+    [Parameter] public string Key { get; set; } = "";
+
+    public static string Link(string key) => "handlers/" + Uri.EscapeDataString(key);
+
+    // "Open in inbox": the Inbox with the filter "Handler = this handler" (A7).
+    async Task OpenInbox() {
+        await Inbox.ShowHandlerAsync(Key);
+        Nav.NavigateTo("inbox");
+    }
+}

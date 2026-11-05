@@ -1,0 +1,31 @@
+@* The search field (height 32) and, if OnFilter is set, the Filter button with the active filter count. *@
+<div class="bar">
+    <div class="srch">
+        <Icon Name="search" />
+        <input placeholder="@Placeholder" value="@Value" data-test="search" @oninput="Input" />
+    </div>
+    @if (OnFilter.HasDelegate) {
+        <button class="fb @(Count > 0 || Open ? "act" : "")" data-test="filter" @onclick="OnFilter">
+            <Icon Name="filter" Size="15" />Filter
+            @if (Count > 0) {
+                <span class="cnt">@Count</span>
+            }
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public string Placeholder { get; set; } = "Search";
+
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public EventCallback<string> OnSearch { get; set; }
+
+    [Parameter] public EventCallback OnFilter { get; set; }
+
+    [Parameter] public int Count { get; set; }
+
+    [Parameter] public bool Open { get; set; }
+
+    Task Input(ChangeEventArgs e) => OnSearch.InvokeAsync(e.Value?.ToString() ?? "");
+}

@@ -1,0 +1,34 @@
+@inherits PresenterComponent<Traffic.Presenters.TrafficPresenter>
+@inject NavigationManager Nav
+
+<BackLink Href="traffic" Label="Traffic" />
+@if (Presenter.Detail is { } r && r.Seq == Seq) {
+    <div class="dh">
+        <div class="dh-title ell">@r.Kind @(r.EventId is { } id ? $"event {id}" : r.Path)</div>
+        <Badge Text="@r.Status" Color="@(r.IsError ? "danger" : "success")" />
+    </div>
+    <div class="gt">Details</div>
+    <div class="grp">
+        <DetailRow Label="Direction" Value="@r.Direction" />
+        <DetailRow Label="Host" Value="@r.Host" />
+        <DetailRow Label="Path" Value="@r.Path" />
+        <DetailRow Label="Size" Value="@r.Size" />
+        <DetailRow Label="Duration" Value="@($"{r.Ms} ms")" />
+    </div>
+    @if (r.EventId is { } eventId) {
+        <button class="pbtn" data-test="open-event" @onclick="() => Nav.NavigateTo(EventDetail.Link(eventId))">Open event #@eventId in inbox</button>
+    } else if (r.Body is { } body) {
+        <div class="gt">Response body (memory only)</div>
+        <div class="grp"><pre class="mono" data-test="body">@body</pre></div>
+    } else if (!r.CaptureBodies) {
+        <div class="note" data-test="no-body">Body not kept. <span class="lnk" data-test="go-settings" @onclick="@(() => Nav.NavigateTo("settings"))">Turn on capture bodies in settings</span></div>
+    } else {
+        <div class="note">No body for this entry.</div>
+    }
+}
+
+@code {
+    [Parameter] public long Seq { get; set; }
+
+    protected override Task OnInitializedAsync() => Presenter.OpenAsync(Seq);
+}

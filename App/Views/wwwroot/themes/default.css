@@ -1,0 +1,78 @@
+/* The default theme: all tokens, light and dark. Components use only these tokens (C7).
+   System: no data-theme, the page follows Windows. Light and Dark: data-theme on the page root. */
+:root {
+  --surface-0: #f5f4ef;
+  --surface-1: #faf9f5;
+  --surface-2: #ffffff;
+  --text-primary: #141413;
+  --text-secondary: #5e5d59;
+  --text-muted: #8f8d86;
+  --text-accent: #185fa5;
+  --text-success: #2f7d32;
+  --text-warning: #8a5a0b;
+  --text-danger: #b3261e;
+  --bg-accent: #e6f1fb;
+  --bg-success: #e8f3df;
+  --bg-warning: #faeeda;
+  --bg-danger: #fcebeb;
+  --border: rgba(0, 0, 0, .10);
+  --border-strong: rgba(0, 0, 0, .18);
+  --border-accent: #85b7eb;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --radius-window: 16px;
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Cascadia Mono", ui-monospace, Consolas, monospace;
+  --font-body: 13px;
+  --font-small: 11px;
+  --font-title: 16px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: #1f1e1d;
+    --surface-1: #262624;
+    --surface-2: #30302e;
+    --text-primary: #f0eee6;
+    --text-secondary: #b8b5ab;
+    --text-muted: #8a877e;
+    --text-accent: #85b7eb;
+    --text-success: #7fc47a;
+    --text-warning: #ef9f27;
+    --text-danger: #f09595;
+    --bg-accent: #0c447c;
+    --bg-success: #27500a;
+    --bg-warning: #633806;
+    --bg-danger: #791f1f;
+    --border: rgba(255, 255, 255, .10);
+    --border-strong: rgba(255, 255, 255, .18);
+    --border-accent: #378add;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface-0: #1f1e1d;
+  --surface-1: #262624;
+  --surface-2: #30302e;
+  --text-primary: #f0eee6;
+  --text-secondary: #b8b5ab;
+  --text-muted: #8a877e;
+  --text-accent: #85b7eb;
+  --text-success: #7fc47a;
+  --text-warning: #ef9f27;
+  --text-danger: #f09595;
+  --bg-accent: #0c447c;
+  --bg-success: #27500a;
+  --bg-warning: #633806;
+  --bg-danger: #791f1f;
+  --border: rgba(255, 255, 255, .10);
+  --border-strong: rgba(255, 255, 255, .18);
+  --border-accent: #378add;
+  color-scheme: dark;
+}

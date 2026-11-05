@@ -1,0 +1,22 @@
+@* A filter chip: off or on (accent), with its label and its count. *@
+<span class="ch @(On ? "on" : "")" data-test="chip-@Value" @onclick="OnClick">
+    @if (Dot is { } dot) {
+        <span class="dot" style="background:var(--text-@dot)"></span>
+    }
+    @Label<span class="n">@Count.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</span>
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public int Count { get; set; }
+
+    [Parameter] public bool On { get; set; }
+
+    // A color name of the tokens, for example success.
+    [Parameter] public string? Dot { get; set; }
+
+    [Parameter] public EventCallback OnClick { get; set; }
+}
