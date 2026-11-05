@@ -140,4 +140,46 @@ public sealed class PipelineTests {
         Assert.That(notion.Status, Is.EqualTo("In Review"));
         Assert.That(notion.Result, Is.EqualTo(Claude.Infrastructure.MockClaude.Answer));
     }
+
+    [Test]
+    public async Task A2_a_task_with_an_open_question_after_the_run_goes_to_waiting() {
+        await using var app = await TestApp.StartAsync();
+        var notion = (Notion.Infrastructure.MockNotion)app.Services.GetService(typeof(Notion.Infrastructure.MockNotion))!;
+        notion.TaskHasQuestion = true;
+        notion.QuestionStatus = "Open";
+        var id = (await app.Bus.Send(new Listener.Slices.SendMockEvent.SendMockEventRequest("task"))).Id;
+
+        await app.UntilFinished(id, seconds: 20);
+
+        Assert.That((app.Store.StatusOf(id), notion.Status), Is.EqualTo((EventStatus.Done, "Waiting")));
+    }
+
+    [Test]
+    public async Task A2_an_answered_question_runs_the_waiting_task_with_the_answer() {
+        await using var app = await TestApp.StartAsync();
+        var notion = (Notion.Infrastructure.MockNotion)app.Services.GetService(typeof(Notion.Infrastructure.MockNotion))!;
+        var claude = (Claude.Infrastructure.MockClaude)app.Services.GetService(typeof(Claude.Infrastructure.MockClaude))!;
+        var id = (await app.Bus.Send(new Listener.Slices.SendMockEvent.SendMockEventRequest("question"))).Id;
+
+        await app.UntilFinished(id, seconds: 20);
+
+        Assert.That((app.Store.StatusOf(id), notion.Status, notion.QuestionStatus), Is.EqualTo((EventStatus.Done, "In Review", "Closed")));
+        Assert.That(claude.LastPrompt, Does.Contain("Question: Mock question").And.Contain("Answer: Use option A."));
+    }
+
+    [Test]
+    public async Task A2_an_answered_question_does_not_run_a_task_that_does_not_wait() {
+        await using var app = await TestApp.StartAsync();
+        var notion = (Notion.Infrastructure.MockNotion)app.Services.GetService(typeof(Notion.Infrastructure.MockNotion))!;
+        var claude = (Claude.Infrastructure.MockClaude)app.Services.GetService(typeof(Claude.Infrastructure.MockClaude))!;
+        notion.Status = "In Review";
+        notion.TaskHasQuestion = true;
+        notion.QuestionStatus = "Answered";
+        var payload = $$"""{"entity":{"id":"{{Notion.Infrastructure.MockNotion.QuestionPageId}}","type":"page"},"authors":[{"id":"mock-user","type":"person"}]}""";
+        var id = (await app.Bus.Send(new Listener.Slices.SendMockEvent.SendMockEventRequest("custom", "notion", "page", "properties_updated", payload))).Id;
+
+        await app.UntilFinished(id, seconds: 20);
+
+        Assert.That((claude.Runs, notion.Status, notion.QuestionStatus), Is.EqualTo((0, "In Review", "Answered")));
+    }
 }

@@ -35,6 +35,12 @@ public sealed record NotionPage(string Id, string Title, string? Url, string? Pa
             ? string.Concat(parts.EnumerateArray().Select(p => p.TryGetProperty("plain_text", out var text) ? text.GetString() : null)).Trim()
             : "";
 
+    // The page IDs of a relation property, or an empty list. The page API gives at most 25 IDs for one relation.
+    public IReadOnlyList<string> RelationOf(string property) =>
+        TryGetProperty(property, out var value) && value.TryGetProperty("relation", out var items) && items.ValueKind == JsonValueKind.Array
+            ? items.EnumerateArray().Select(i => i.TryGetProperty("id", out var id) ? id.GetString() : null).OfType<string>().ToList()
+            : [];
+
     // True if the page is in the data source (or database) with this ID.
     public bool IsIn(string dataSourceId) {
         var target = NotionWebhook.NormalizeId(dataSourceId);
