@@ -3,14 +3,14 @@
 Three parts use these contracts. If you change a contract, change all parts in the same PR.
 
 ```
-Cloudflare: inbox Worker ──contract A──► Runner.Host (connector) ──contract B──► Runner.Handlers
+Cloudflare: inbox Worker ──contract A──► Listener and Events modules ──contract B──► business modules (InboxHandler)
 ```
 
 | Part | Repository | Owns |
 |---|---|---|
 | Inbox | `MgCohen/inbox` | Webhooks, D1, hub, `/listen`, settled flag, cleanup |
-| Connector | `MgCohen/runner`, `src/Runner.Host` | Socket, catch-up, local store, dispatch, ack |
-| Handlers | `MgCohen/runner`, `src/Runner.Handlers` | Business logic and its helpers |
+| Connector | `MgCohen/runner`, `Modules/Listener`, `Modules/Events`, `Shared/Handling` | Socket, catch-up, local store, handler lanes, ack |
+| Handlers | `MgCohen/runner`, business modules (`Modules/Tasks`, `Modules/Notion` …) | Business logic and its helpers |
 
 ## Contract A: inbox to connector
 
@@ -30,7 +30,7 @@ The live push and `GET /api/events?payload=1` give each event in this shape:
 }
 ```
 
-`id` increases. It is the dedup key and the order key. C# type: `Runner.Abstractions.InboxEvent`.
+`id` increases. It is the dedup key and the order key. C# type: `Handling.Slices.Handling.InboxEvent` (`Shared/Handling`).
 
 ### Live push
 
@@ -64,25 +64,33 @@ The API in the inbox README stays the same, with one addition:
 
 ## Contract B: connector to handlers
 
-Types are in `src/Runner.Abstractions`.
+A handler is a VSA event handler slice in a business module. It inherits `InboxHandler` (`Shared/Handling`).
 
 ```csharp
-[On("notion", "page", "properties_updated")]
-public sealed class PageUpdated : IEventHandler
-{
-    public Task HandleAsync(InboxEvent e, HandlerContext context) { ... }
+// Modules/Tasks/Slices/StartTodoTask/TaskTodoStarted.cs
+sealed class TaskTodoStarted(HandlerContext context, INotionClient notion /* , … */) : InboxHandler(context) {
+    public override HandlerConfig Config { get; } = new() {
+        Sources = ["notion"],
+        Matches = [new Match("page", "properties_updated"), new Match("page", "created")],
+        Description = "Starts Claude when a Notion task goes to Todo",
+    };
+
+    protected override async Task Run(InboxEvent e, CancellationToken ct) { /* … */ }
 }
 ```
 
 | Rule | Value |
 |---|---|
-| Discovery | The connector finds each `IEventHandler` class with `[On]` in `Runner.Handlers` and creates it with dependency injection. |
-| Services | `Runner.Handlers` gives an extension `services.AddHandlers(configuration)`. The host calls it. |
-| Match | `[On(source, eventType, action)]`. A null value matches any value. One event can match more than one handler. |
-| Return | Done. The connector acks the event when all matching handlers are done. |
-| Exception | Retry with backoff, maximum 5 attempts. Then the event is failed and acked. |
-| `PermanentFailureException` | Failed without a retry, then acked. |
-| Duplicates | A handler can get the same event two times. It must accept that. |
-| No match | The connector acks the event immediately. |
-| Handler off | A handler that is off in the switches does not run for the event. The event is done and acked without it. Turning the handler on again does not run it for earlier events. |
-| Activity output | A handler writes lines for the person who watches the runner to `IActivitySink.Write(line)`. The connector gives a console sink if the application registers no sink. |
+| Discovery | The VSA host registers each `InboxHandler` subclass. The handler catalog reads the `HandlerConfig` of each one. The key of a handler is its full type name. |
+| Match | `Sources` and `Matches` (type and action). A null type or action matches any value. One event can match more than one handler. |
+| Lanes | Each handler has one lane. A lane runs one item at a time, oldest first (received time, then ID). A slow handler delays only its own lane. |
+| Return | Done. The event is acked when each matching handler has a final result. |
+| Exception | Retry with backoff (30 s, doubled, up to 30 min), maximum 5 attempts. Then the failure is final, the event is Failed and acked. |
+| Timeout | `HandlerConfig.Timeout` (default 10 min). A timeout is a failed attempt with the reason "timeout". |
+| `PermanentFailureException` | Failed at once, with no retry, then acked. |
+| Exit | The running handler is cancelled. The result is "cancelled", the item stays pending and does not count as an attempt, and the event runs at the next start. |
+| Duplicates | The store drops a known event ID. A duplicate of a finished event is acked again. A handler can still get the same event two times; it must accept that. |
+| No match | The event is done and acked at once. |
+| Handler off | The handler skips the event ("skipped (off)"). The event is done and acked without it. Turning the handler on again does not run it for earlier events. |
+| Source off | Each handler skips the events of the source ("skipped (source off)"). Only the listener switch makes events wait. |
+| Output | A handler writes to its logger. `claude -p` writes its output to the window that started the app. |

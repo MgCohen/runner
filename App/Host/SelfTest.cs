@@ -7,7 +7,7 @@ namespace App.Host;
 
 // The self-test (C8): it drives the real app through fixed steps, checks each result, and saves a screenshot of each
 // check. It starts paused (--selftest implies --paused, A1). Output: report.json and the screenshots in
-// <data folder>\selftest. Exit code: 0 when all checks pass, else 1 (A37).
+// %LOCALAPPDATA%\Runner\mock\selftest (real mode: ...\Runner\selftest-real). Exit code: 0 when all checks pass, else 1 (A37).
 // Mock mode runs each check. Real mode only makes the screenshots of the pages, with the Claude handlers off.
 public sealed class SelfTest {
     static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
@@ -22,7 +22,9 @@ public sealed class SelfTest {
     SelfTest(TrayApp tray, WebApplication app) {
         this.tray = tray;
         this.app = app;
-        folder = Path.Combine(app.Configuration["Runner:DataDir"]!, "selftest");
+        var mock = app.Services.GetService<SelfTestProbe>() is not null;
+        folder = mock ? Path.Combine(app.Configuration["Runner:DataDir"]!, "selftest")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Runner", "selftest-real");
     }
 
     public sealed record CheckResult(string Id, bool Pass, string Message, string? Screenshot);
@@ -237,7 +239,7 @@ public sealed class SelfTest {
             await ClearFilters();
         });
         await Check("A12", "Capture bodies off: an HTTP entry says Body not kept, with a link to Settings", async () => {
-            await OpenTraffic("GET", "", " ");
+            await OpenTraffic("GET", "", null);
             await Until("document.querySelector('[data-test=no-body]') !== null", "Body not kept");
             await Shot("traffic-detail");
             await Click("[data-test=go-settings]");
@@ -396,10 +398,10 @@ public sealed class SelfTest {
     }
 
     // Opens the newest traffic entry of a kind whose label contains one text and not another.
-    async Task OpenTraffic(string kind, string include, string exclude) {
+    async Task OpenTraffic(string kind, string include, string? exclude) {
         await Click("[data-test=nav-traffic]");
         await ClearFilters();
-        var match = $"e => e.textContent.trim().startsWith('{kind} ') && e.textContent.includes({JsonSerializer.Serialize(include)}) && !e.textContent.includes({JsonSerializer.Serialize(exclude)})";
+        var match = $"e => e.textContent.trim().startsWith('{kind} ') && e.textContent.includes({JsonSerializer.Serialize(include)}) " + (exclude is null ? "" : $" && !e.textContent.includes({JsonSerializer.Serialize(exclude)})");
         await Until($"[...document.querySelectorAll('.ev')].some({match})", $"a {kind} entry");
         await Js($"[...document.querySelectorAll('.ev')].find({match}).click()");
         await Until("document.querySelector('.badge') !== null", "the entry page");
