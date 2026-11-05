@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!--
+    The one process of the runner (T1): the VSA modules, Kestrel on 127.0.0.1, the tray icon and the widget window.
+    A console-subsystem WinForms app: the process keeps the console of tray.ps1, so the logs and the output of the
+    claude -p child stay in that visible window (T3). DisableWinExeOutputInference keeps OutputType Exe.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <RootNamespace>App.Host</RootNamespace>
+    <!-- LibraryImport for the window calls (drag, rounded corners). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Hosting" />
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- No PrivateAssets: a test project that references the host also gets the module layers. -->
+    <ProjectReference Include="../Views/App.Views.csproj" />
+    <ProjectReference Include="../../Modules/*/*.csproj" />
+    <PackageReference Include="VSA.Host" Version="0.1.0-main.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.WindowsForms" Version="10.0.120" />
+  </ItemGroup>
+</Project>

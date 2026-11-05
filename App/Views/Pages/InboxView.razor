@@ -1,0 +1,60 @@
+@inherits PresenterComponent<Events.Presenters.InboxPresenter>
+@using Events.Presenters
+@inject NavigationManager Nav
+
+@* Inbox (C3): search, filter, chips, the summary line, the event rows newest first, and "Load older events". *@
+<SearchBar Placeholder="Search events" Value="@Presenter.Text" OnSearch="Presenter.SearchAsync" Count="Presenter.ActiveCount" Open="Presenter.PanelOpen"
+           OnFilter="() => Presenter.SetPanel(!Presenter.PanelOpen)" />
+<ActiveChips Items="Chips()" OnRemove="i => Presenter.RemoveAsync(i.Group, i.Value)" />
+<div class="meta" data-test="summary">@Format.Count(Presenter.Matching) match · @Format.Count(Presenter.Total) in store</div>
+@if (Presenter.Events.Count == 0 && Presenter.Loaded) {
+    <div class="empty" data-test="empty">@(Presenter.Total == 0 ? "No events yet" : "No events match these filters")</div>
+}
+@foreach (var e in Presenter.Events) {
+    <div class="ev" data-test="event-@e.Id" @onclick="() => Nav.NavigateTo(EventDetail.Link(e.Id))">
+        <span class="dot" style="background:var(--text-@Badge.OfState(e.State))"></span>
+        <div class="grow">
+            <div class="ell">#@e.Id @e.Source <span class="secondary">@e.Type</span></div>
+            <div class="small muted ell">@e.State · @e.Handlers</div>
+        </div>
+        <span class="small muted">@Format.Time(e.ReceivedAt)</span>
+        <span class="muted"><Icon Name="chevron-right" /></span>
+    </div>
+}
+@if (Presenter.HasMore) {
+    <div class="more"><span class="lnk" data-test="load-older" @onclick="Presenter.LoadOlderAsync">Load older events</span></div>
+}
+@if (Presenter.PanelOpen) {
+    <FilterPanel OnClear="Presenter.ClearAsync" OnDone="() => Presenter.SetPanel(false)">
+        <div class="gl">State</div>
+        @foreach (var state in States) {
+            <Chip Label="@state" Value="@state" Dot="@Badge.OfState(state)" On="Presenter.Selected(InboxPresenter.StateGroup).Contains(state)"
+                  Count="Presenter.FacetCount(InboxPresenter.StateGroup, state)" OnClick="() => Presenter.ToggleAsync(InboxPresenter.StateGroup, state)" />
+        }
+        <div class="gl">Source</div>
+        @foreach (var source in Presenter.SourceOptions) {
+            <Chip Label="@source" Value="@source" On="Presenter.Selected(InboxPresenter.SourceGroup).Contains(source)"
+                  Count="Presenter.FacetCount(InboxPresenter.SourceGroup, source)" OnClick="() => Presenter.ToggleAsync(InboxPresenter.SourceGroup, source)" />
+        }
+        <div class="gl">Handler</div>
+        @foreach (var (source, handlers) in Presenter.HandlerGroups) {
+            <div class="sub">@source</div>
+            @foreach (var h in handlers) {
+                <Chip Label="@h.Name" Value="@h.Name" On="Presenter.Selected(InboxPresenter.HandlerGroup).Contains(h.Key)"
+                      Count="Presenter.FacetCount(InboxPresenter.HandlerGroup, h.Key)" OnClick="() => Presenter.ToggleAsync(InboxPresenter.HandlerGroup, h.Key)" />
+            }
+        }
+    </FilterPanel>
+}
+
+@code {
+    static readonly string[] States = ["new", "pending", "done", "failed"];
+
+    protected override Task OnInitializedAsync() => Presenter.Loaded ? Task.CompletedTask : Presenter.LoadAsync();
+
+    List<ActiveChips.Item> Chips() => [
+        .. Presenter.Selected(InboxPresenter.StateGroup).Select(v => new ActiveChips.Item(InboxPresenter.StateGroup, v, v)),
+        .. Presenter.Selected(InboxPresenter.SourceGroup).Select(v => new ActiveChips.Item(InboxPresenter.SourceGroup, v, v)),
+        .. Presenter.Selected(InboxPresenter.HandlerGroup).Select(v => new ActiveChips.Item(InboxPresenter.HandlerGroup, v, Presenter.HandlerName(v))),
+    ];
+}

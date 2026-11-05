@@ -1,0 +1,5 @@
+<Project Sdk="VSA.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+@* An icon button, 28 × 28: normal, hover, on (accent). A click does not start a window drag. *@
+<button class="ib @(On ? "on" : "")" aria-label="@Label" title="@Label" data-test="@Test"
+        @onclick="OnClick" @onmousedown:stopPropagation="true"><Icon Name="@Icon" Size="17" /></button>
+
+@code {
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+
+    [Parameter] public bool On { get; set; }
+
+    [Parameter] public string? Test { get; set; }
+
+    [Parameter] public EventCallback OnClick { get; set; }
+}

@@ -1,0 +1,41 @@
+@inherits PresenterComponent<Events.Presenters.InboxPresenter>
+
+<BackLink Href="inbox" Label="Inbox" />
+@if (Presenter.Detail is { } e && e.Id == Id) {
+    <div class="dh">
+        <div class="dh-title ell">#@e.Id @e.Source</div>
+        <Badge Text="@e.State" Color="@Badge.OfState(e.State)" />
+    </div>
+    <div class="type mono-inline">@e.Type</div>
+    <div class="gt">Details</div>
+    <div class="grp">
+        <DetailRow Label="Received" Value="@Format.Seconds(e.ReceivedAt)" />
+        <DetailRow Label="Attempts" Value="@e.Attempts.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+        <DetailRow Label="Acked" Value="@(e.AckedAt is { } acked ? Format.Seconds(acked) : "not yet")" />
+    </div>
+    <div class="gt">Handlers</div>
+    <div class="grp" data-test="results">
+        @if (e.Results.Count == 0) {
+            <div class="kr"><span class="k wide">No handler matches</span></div>
+        }
+        @foreach (var (handler, result) in e.Results) {
+            <DetailRow Label="@handler" Value="@result" />
+        }
+    </div>
+    <div class="gt">Payload</div>
+    <div class="grp"><pre class="mono">@e.Payload</pre></div>
+}
+
+@code {
+    [Parameter] public long Id { get; set; }
+
+    long opened;
+
+    protected override Task OnParametersSetAsync() {
+        if (opened == Id) {
+            return Task.CompletedTask;
+        }
+        opened = Id;
+        return Presenter.OpenAsync(Id);
+    }
+}

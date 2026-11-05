@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runner tray widget mockup</title>
+<!-- Wrapper: tokens, icon font and base styles that the chat window gave the mockup. The widget code below is version 9, unchanged. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --surface-0:#f5f4ef;--surface-1:#faf9f5;--surface-2:#ffffff;
+  --text-primary:#141413;--text-secondary:#5e5d59;--text-muted:#8f8d86;
+  --text-accent:#185fa5;--text-success:#2f7d32;--text-warning:#8a5a0b;--text-danger:#b3261e;
+  --bg-accent:#e6f1fb;--bg-success:#e8f3df;--bg-warning:#faeeda;--bg-danger:#fcebeb;
+  --border:rgba(0,0,0,.10);--border-strong:rgba(0,0,0,.18);--border-accent:#85b7eb;
+  --font-sans:system-ui,"Segoe UI",Roboto,sans-serif;--font-mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --radius:8px;
+}
+@media (prefers-color-scheme: dark){:root{
+  --surface-0:#1f1e1d;--surface-1:#262624;--surface-2:#30302e;
+  --text-primary:#f0eee6;--text-secondary:#b8b5ab;--text-muted:#8a877e;
+  --text-accent:#85b7eb;--text-success:#7fc47a;--text-warning:#ef9f27;--text-danger:#f09595;
+  --bg-accent:#0c447c;--bg-success:#27500a;--bg-warning:#633806;--bg-danger:#791f1f;
+  --border:rgba(255,255,255,.10);--border-strong:rgba(255,255,255,.18);--border-accent:#378add;
+}}
+html,body{margin:0;background:var(--surface-0);color:var(--text-primary);font-family:var(--font-sans);font-size:16px}
+body{max-width:420px;margin:24px auto;padding:0 16px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;cursor:pointer}
+button:hover{background:var(--surface-1)}
+input{font:inherit;color:var(--text-primary)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Full runner tray widget mockup version 9: version 8 with a traffic summary line under the search and filter.</h2>
+<style>
+.desk{position:relative;height:640px;background:var(--surface-1);border-radius:12px;overflow:hidden}
+.w{position:absolute;left:20px;top:14px;width:350px;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:16px;overflow:hidden;font-size:13px}
+.hd{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 14px;cursor:grab;user-select:none;border-bottom:0.5px solid var(--border)}
+.ib{width:28px!important;height:28px!important;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;border:none!important;background:transparent;padding:0!important;flex:none}
+.ib:hover{background:var(--surface-1)}.ib.on{color:var(--text-accent);background:var(--bg-accent)}
+#pg{height:460px;overflow-y:auto;scrollbar-gutter:stable;scrollbar-width:thin}
+.sw{width:34px;height:20px;border-radius:10px;background:var(--border-strong);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface-2);transition:left .15s}
+.sw.on{background:var(--text-success)}.sw.on::after{left:16px}.sw.dis{opacity:.45;cursor:default}
+.sec{margin:0 6px 8px 12px;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1);overflow:hidden}
+.sh{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
+.hc{display:flex;align-items:center;gap:10px;padding:9px 12px 9px 36px;border-top:0.5px solid var(--border);background:var(--surface-2);cursor:pointer}.hc:hover{background:var(--surface-1)}
+.nav{display:flex;border-top:0.5px solid var(--border)}.nav div{flex:1;text-align:center;padding:8px 0;cursor:pointer;color:var(--text-muted);font-size:12px}.nav div.act{color:var(--text-primary)}
+.ev{display:flex;align-items:center;gap:8px;height:46px;box-sizing:border-box;padding:0 8px 0 14px;border-top:0.5px solid var(--border);cursor:pointer}.ev:hover{background:var(--surface-1)}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{display:flex;gap:8px;padding:10px 6px 10px 12px;align-items:center}
+.srch{flex:1;display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;background:var(--surface-1);border:0.5px solid var(--border);box-sizing:border-box}
+.srch input{border:none!important;background:transparent!important;height:28px!important;padding:0!important;margin:0!important;box-shadow:none!important;outline:none!important;flex:1;min-width:0;width:auto!important;font-size:13px!important;color:var(--text-primary)}
+.fb{height:32px!important;display:flex;align-items:center;gap:6px;padding:0 10px!important;border-radius:10px;border:0.5px solid var(--border-strong);background:transparent;cursor:pointer;font-size:13px;color:var(--text-primary);flex:none}
+.fb.act{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}
+.cnt{font-size:11px;min-width:16px;height:16px;border-radius:8px;background:var(--text-accent);color:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+.pop{position:absolute;top:118px;right:12px;width:310px;max-height:420px;display:flex;flex-direction:column;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:14px;z-index:3}
+.pb{overflow:auto;padding:12px 12px 4px}.pf{display:flex;justify-content:space-between;padding:10px 12px;border-top:0.5px solid var(--border)}
+.gl{font-size:11px;color:var(--text-muted);margin:10px 0 6px}.gl:first-child{margin-top:0}.sub{font-size:11px;color:var(--text-secondary);margin:4px 0}
+.ch{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:0.5px solid var(--border);cursor:pointer;font-size:12px;margin:0 4px 6px 0;user-select:none}
+.ch.on{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}.ch .n{color:var(--text-muted);font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.ac{display:inline-flex;align-items:center;gap:4px;padding:3px 6px 3px 10px;border-radius:999px;background:var(--surface-1);border:0.5px solid var(--border);font-size:12px}.ac i{cursor:pointer;color:var(--text-muted)}
+.lnk{color:var(--text-accent);cursor:pointer;font-size:12px}
+.meta{padding:0 6px 6px 14px;font-size:11px;color:var(--text-muted)}
+.back{display:flex;align-items:center;gap:6px;padding:10px 14px;cursor:pointer;color:var(--text-secondary)}
+.dh{padding:0 6px 4px 16px;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;padding:2px 8px;border-radius:999px;flex:none}
+.grp{margin:0 6px 12px 12px;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1);overflow:hidden}
+.gt{font-size:11px;color:var(--text-muted);margin:12px 16px 6px}
+.set,.kr{display:flex;align-items:center;gap:10px;min-height:38px;box-sizing:border-box;padding:6px 12px;border-top:0.5px solid var(--border)}.set:first-child,.kr:first-child{border-top:none}
+.kr:hover{background:var(--surface-2)}.kr .k{color:var(--text-secondary);font-size:12px;flex:none;width:86px}.kr .v{flex:1;min-width:0;text-align:right;font-size:12px}
+.mono{font-family:var(--font-mono);font-size:11px;line-height:1.5;white-space:pre-wrap;margin:0;padding:10px 12px}
+.tag{font-size:10px;padding:1px 6px;border-radius:999px;background:var(--bg-warning);color:var(--text-warning);margin-left:6px}
+.seg{display:inline-flex;border:0.5px solid var(--border-strong);border-radius:8px;overflow:hidden;flex:none}.seg span{font-size:11px;padding:4px 8px;cursor:pointer;color:var(--text-secondary)}.seg span+span{border-left:0.5px solid var(--border)}.seg span.on{background:var(--bg-accent);color:var(--text-accent)}
+.pbtn{display:block;width:calc(100% - 18px);margin:0 6px 14px 12px}
+</style>
+<div class="desk" id="desk">
+<div class="w" id="w">
+ <div class="hd" id="hd">
+  <div class="sw" id="lis" title="Listener on or off"></div>
+  <div style="flex:1;min-width:0"><div style="font-weight:500">Runner</div><div style="color:var(--text-secondary);font-size:12px" class="ell" id="sub">Paused</div></div>
+  <button class="ib" id="pin" aria-label="Pin on screen"><i class="ti ti-pin" style="font-size:17px"></i></button>
+  <button class="ib" id="gear" aria-label="Settings"><i class="ti ti-settings" style="font-size:17px"></i></button>
+  <button class="ib" aria-label="Hide"><i class="ti ti-x" style="font-size:16px"></i></button>
+ </div>
+ <div id="pg"></div>
+ <div class="nav"><div data-p="home"><i class="ti ti-home" style="font-size:17px;display:block"></i>Home</div><div data-p="inbox"><i class="ti ti-inbox" style="font-size:17px;display:block"></i>Inbox</div><div data-p="net"><i class="ti ti-arrows-exchange" style="font-size:17px;display:block"></i>Traffic</div></div>
+ <div class="pop" id="pop" style="display:none"></div>
+</div>
+</div>
+<script>
+const ST={new:'accent',pending:'warning',done:'success',failed:'danger'};
+const SRC={notion:'notebook',github:'brand-github',linear:'stack-2',slack:'brand-slack',stripe:'credit-card',calendar:'calendar'};
+const HS={notion:['TaskTodoStarted','LogEverything','NotionPageUpdated','DocPublished'],github:['PrMerged','CiFailed','IssueOpened'],linear:['LinearSync'],slack:['MentionToTask'],stripe:['InvoicePaid'],calendar:[]};
+const HD={TaskTodoStarted:['Todo task runs claude -p, then In Review','notion · page · properties_updated, created'],LogEverything:['One log line for each event','notion · all'],NotionPageUpdated:['Any page edit starts a session','notion · page · properties_updated'],DocPublished:['Published doc posts a summary','notion · page · properties_updated'],PrMerged:['Merged PR sets its Notion task to Done','github · pull_request · closed'],CiFailed:['Failed CI run opens a fix task','github · workflow_run · completed'],IssueOpened:['New issue goes to Asks','github · issues · opened'],LinearSync:['Mirrors issue state to Notion','linear · Issue'],MentionToTask:['A mention becomes a task','slack · app_mention'],InvoicePaid:['Logs paid invoices','stripe · invoice · paid']};
+const TY={notion:['page.created','page.properties_updated','page.content_updated','comment.created'],github:['push','pull_request.closed','workflow_run.completed','issues.opened'],linear:['Issue.update','Issue.create'],slack:['app_mention','message'],stripe:['invoice.paid','charge.failed'],calendar:['event.created']};
+const S={lis:false,pin:false,page:'home',view:null,q:'',iq:'',tq:'',open:{notion:true,github:true},fo:false,F:{st:new Set(),src:new Set(),h:new Set()},TF:{dir:new Set(),kind:new Set(),res:new Set()},on:{},set:{cap:false,keep:500,lisStart:true,pinStart:false,openStart:true,win:false,ret:7,theme:'System',notify:false}};
+Object.keys(SRC).forEach(s=>S.on[s]=s!=='calendar');Object.values(HS).flat().forEach(h=>S.on[h]=h!=='NotionPageUpdated');
+const sts=['done','done','done','done','pending','failed','new'];const E=[];let id=12480;
+for(let i=0;i<40;i++){const s=Object.keys(SRC)[i%6===5?(i%4):i%6];const t=TY[s][i%TY[s].length];const hs=HS[s].filter((h,j)=>(i+j)%2===0).slice(0,2);const st=sts[i%7];const m=Math.max(0,59-i*2);
+E.push({id:id--,s,t,st,hs,res:Object.fromEntries(hs.map(h=>[h,!S.on[h]?'skipped (off)':st==='failed'?'failed: 404 Not Found':st==='done'?'done (1.2 s)':'waiting'])),time:`16:${String(m).padStart(2,'0')}`,att:st==='failed'?5:st==='done'?1:0,ack:st==='done'||st==='failed'?`16:${String(m).padStart(2,'0')}:0${i%9}`:null})}
+const T=[];E.slice(0,20).forEach((e,i)=>{T.push({dir:'in',kind:'event',res:'ok',host:'inbox.mgcohen.workers.dev',path:'/listen',label:`event ${e.id}`,kb:(97+i*13)/1024,size:`${97+i*13} B`,ms:'—',status:'received',ev:e.id});const kb=1.1+i*0.2;T.push({dir:'out',kind:['GET','PATCH','POST'][i%3],res:i%7===3?'error':'ok',host:i%3===2?'inbox.mgcohen.workers.dev':`api.${e.s}.com`,path:i%3===2?'/api/consume':`/v1/pages/40e9${i}a1b2`,label:i%3===2?'inbox /api/consume':`api.${e.s}.com /v1/pages/…`,kb,size:`${kb.toFixed(1)} KB`,ms:String(80+i*9),status:i%7===3?'500':'200'})});
+const pg=document.getElementById('pg'),F=S.F,TF=S.TF;
+const match=(e,skip)=>(skip==='st'||!F.st.size||F.st.has(e.st))&&(skip==='src'||!F.src.size||F.src.has(e.s))&&(skip==='h'||!F.h.size||e.hs.some(h=>F.h.has(h)))&&(!S.iq||(`#${e.id} ${e.s} ${e.t}`).toLowerCase().includes(S.iq));
+const tmatch=(r,skip)=>['dir','kind','res'].every(g=>g===skip||!TF[g].size||TF[g].has(r[g]))&&(!S.tq||(`${r.kind} ${r.label} ${r.host}`).toLowerCase().includes(S.tq));
+const cnt=(g,v)=>E.filter(e=>match(e,g)&&(g==='st'?e.st===v:g==='src'?e.s===v:e.hs.includes(v))).length*37;
+const tcnt=(g,v)=>T.filter(r=>tmatch(r,g)&&r[g]===v).length;
+const chip=(g,v,pre='')=>`<span class="ch ${F[g].has(v)?'on':''}" data-g="${g}" data-v="${v}">${pre}${v}<span class="n">${cnt(g,v).toLocaleString()}</span></span>`;
+const tchip=(g,v,lbl)=>`<span class="ch ${TF[g].has(v)?'on':''}" data-tg="${g}" data-v="${v}">${lbl||v}<span class="n">${tcnt(g,v)}</span></span>`;
+const last=k=>{const e=E.find(e=>e.hs.includes(k));return e?`#${e.id} ${e.t} · ${e.time}`:'No events yet'};
+const back=(to,l)=>`<div class="back" data-back="${to}"><i class="ti ti-chevron-left"></i>${l}</div>`;
+const kv=r=>r.map(([k,v])=>`<div class="kr"><span class="k">${k}</span><span class="v ell">${v}</span></div>`).join('');
+const badge=(t,c)=>`<span class="badge" style="background:var(--bg-${c});color:var(--text-${c})">${t}</span>`;
+const fbar=(iid,val,ph,n,open,bid)=>`<div class="bar"><div class="srch"><i class="ti ti-search" style="color:var(--text-muted)"></i><input id="${iid}" placeholder="${ph}" value="${val}"></div><button class="fb ${n||open?'act':''}" id="${bid}"><i class="ti ti-filter" style="font-size:15px"></i>Filter${n?`<span class="cnt">${n}</span>`:''}</button></div>`;
+const chips=(sets)=>{const a=Object.entries(sets).flatMap(([g,s])=>[...s].map(v=>`<span class="ac">${v}<i class="ti ti-x" data-rm="${g}|${v}"></i></span>`));return a.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 6px 8px 12px">${a.join('')}</div>`:''};
+function hdr(){document.getElementById('lis').classList.toggle('on',S.lis);document.getElementById('pin').classList.toggle('on',S.pin);document.getElementById('gear').classList.toggle('on',S.page==='set');document.getElementById('sub').textContent=S.lis?'Connected · laptop-ura30pok':'Paused';document.querySelectorAll('.nav div').forEach(n=>n.classList.toggle('act',n.dataset.p===S.page&&!S.view))}
+function home(){let s=`<div class="bar"><div class="srch"><i class="ti ti-search" style="color:var(--text-muted)"></i><input id="q" placeholder="Search sources and handlers" value="${S.q}"></div></div>`;
+for(const [k,ic] of Object.entries(SRC)){const hs=HS[k].filter(n=>!S.q||n.toLowerCase().includes(S.q)||k.includes(S.q));if(S.q&&!hs.length&&!k.includes(S.q))continue;const op=S.open[k]||S.q;
+s+=`<div class="sec"><div class="sh" data-fold="${k}"><i class="ti ti-chevron-${op?'down':'right'}" style="color:var(--text-muted)"></i><i class="ti ti-${ic}" style="font-size:18px;color:var(--text-secondary)"></i><div style="flex:1;min-width:0"><div style="font-weight:500">${k}</div><div style="font-size:11px;color:var(--text-muted)">${HS[k].length} handlers · ${(E.filter(e=>e.s===k).length*311).toLocaleString()} events</div></div><div class="sw ${S.on[k]?'on':''}" data-t="${k}"></div></div>`;
+if(op)s+=hs.length?hs.map(n=>`<div class="hc" data-h="${n}"><div style="flex:1;min-width:0"><div class="ell">${n}</div><div style="font-size:11px;color:var(--text-secondary)" class="ell">Last: ${last(n)}</div></div><div class="sw ${S.on[n]?'on':''}" data-t="${n}"></div><i class="ti ti-chevron-right" style="color:var(--text-muted)"></i></div>`).join(''):`<div class="hc" style="cursor:default;color:var(--text-muted)">No handlers yet</div>`;s+='</div>'}return s}
+function hdet(n){const src=Object.keys(HS).find(s=>HS[s].includes(n));const m=E.filter(e=>e.hs.includes(n));return back('home','Home')+`<div class="dh"><div style="font-size:16px;font-weight:500;flex:1" class="ell">${n}</div><div class="sw ${S.on[n]?'on':''}" data-t="${n}"></div></div><div style="color:var(--text-secondary);padding:0 6px 4px 16px">${HD[n][0]}</div><div class="gt">Details</div><div class="grp">${kv([['Source',src],['Listens to',`<span style="font-family:var(--font-mono);font-size:11px">${HD[n][1]}</span>`],['Last',last(n)],['Events',(m.length*37).toLocaleString()],['Failed',m.filter(e=>e.st==='failed').length*3]])}</div><button class="pbtn" data-by="h|${n}">Open in inbox</button>`}
+function inbox(){const n=F.st.size+F.src.size+F.h.size;const l=E.filter(e=>match(e));
+return fbar('iq',S.iq,'Search events',n,S.fo==='in','fb')+chips({st:F.st,src:F.src,h:F.h})+`<div class="meta">${l.length} of ${E.length} loaded · 4,812 in store</div>`+
+(l.length?l.map(e=>`<div class="ev" data-ev="${e.id}"><span class="dot" style="background:var(--text-${ST[e.st]})"></span><div style="flex:1;min-width:0"><div class="ell">#${e.id} ${e.s} <span style="color:var(--text-secondary)">${e.t}</span></div><div style="font-size:11px;color:var(--text-muted)" class="ell">${e.st} · ${e.hs.join(', ')||'no handler'}</div></div><span style="font-size:11px;color:var(--text-muted)">${e.time}</span><i class="ti ti-chevron-right" style="color:var(--text-muted)"></i></div>`).join('')+'<div style="padding:12px;text-align:center"><span class="lnk">Load older events</span></div>':'<div style="padding:24px;text-align:center;color:var(--text-muted)">No events match these filters</div>')}
+function edet(i){const e=E.find(x=>x.id==i);return back('inbox','Inbox')+`<div class="dh"><div style="font-size:16px;font-weight:500;flex:1;min-width:0" class="ell">#${e.id} ${e.s}</div>${badge(e.st,ST[e.st])}</div><div style="color:var(--text-secondary);padding:0 6px 0 16px;font-family:var(--font-mono);font-size:12px">${e.t}</div><div class="gt">Details</div><div class="grp">${kv([['Received',e.time],['Attempts',e.att],['Acked',e.ack||'not yet']])}</div><div class="gt">Handlers</div><div class="grp">${e.hs.length?kv(Object.entries(e.res)):'<div class="kr"><span class="k" style="width:auto">No handler matches</span></div>'}</div><div class="gt">Payload</div><div class="grp"><pre class="mono">{
+  "id": "367cba44-…",
+  "type": "${e.t}",
+  "entity": { "id": "40e91e24-…", "type": "page" },
+  "authors": [ { "type": "person" } ]
+}</pre></div>`}
+function popIn(){const srcs=F.src.size?[...F.src]:Object.keys(SRC);let h='<div class="gl">Handler</div>';for(const s of srcs){if(!HS[s].length)continue;h+=`<div class="sub">${s}</div>`+HS[s].map(x=>chip('h',x)).join('')}
+return `<div class="pb"><div class="gl">State</div>`+Object.entries(ST).map(([k,c])=>chip('st',k,`<span class="dot" style="background:var(--text-${c})"></span>`)).join('')+`<div class="gl">Source</div>`+Object.keys(SRC).map(s=>chip('src',s)).join('')+h+`</div><div class="pf"><span class="lnk" id="clr">Clear all</span><span class="lnk" id="done">Done</span></div>`}
+function popNet(){return `<div class="pb"><div class="gl">Direction</div>${tchip('dir','in','in (received)')}${tchip('dir','out','out (sent)')}<div class="gl">Kind</div>${['event','GET','PATCH','POST'].map(k=>tchip('kind',k)).join('')}<div class="gl">Result</div>${tchip('res','ok')}${tchip('res','error')}</div><div class="pf"><span class="lnk" id="clr">Clear all</span><span class="lnk" id="done">Done</span></div>`}
+const kb=v=>v<10?v.toFixed(1):Math.round(v);
+function net(){const n=TF.dir.size+TF.kind.size+TF.res.size;const l=T.map((r,i)=>[r,i]).filter(([r])=>tmatch(r));const err=l.filter(([r])=>r.res==='error').length;const kin=l.filter(([r])=>r.dir==='in').reduce((a,[r])=>a+r.kb,0),kout=l.filter(([r])=>r.dir==='out').reduce((a,[r])=>a+r.kb,0);
+return fbar('tq',S.tq,'Search traffic',n,S.fo==='net','tfb')+chips({dir:TF.dir,kind:TF.kind,res:TF.res})+`<div class="meta">${l.length} of ${S.set.keep} kept · <span style="color:var(--text-${err?'danger':'muted'})">${err} error${err===1?'':'s'}</span> · ${kb(kin)} KB in · ${kb(kout)} KB out</div>`+(l.length?l.map(([r,i])=>`<div class="ev" data-tr="${i}"><i class="ti ti-arrow-${r.dir==='in'?'down-left':'up-right'}" style="color:var(--text-${r.res==='error'?'danger':r.dir==='in'?'success':'accent'})"></i><div style="flex:1;min-width:0" class="ell">${r.kind} <span style="color:var(--text-secondary)">${r.label}</span></div><span style="color:var(--text-${r.res==='error'?'danger':'muted'});font-size:11px;flex:none">${r.res==='error'?r.status:r.size} · ${r.ms} ms</span><i class="ti ti-chevron-right" style="color:var(--text-muted)"></i></div>`).join(''):'<div style="padding:24px;text-align:center;color:var(--text-muted)">No traffic matches these filters</div>')}
+function tdet(i){const r=T[i];return back('net','Traffic')+`<div class="dh"><div style="font-size:16px;font-weight:500;flex:1;min-width:0" class="ell">${r.kind} ${r.dir==='in'?r.label:r.path}</div>${badge(r.status,r.res==='error'?'danger':'success')}</div><div class="gt">Details</div><div class="grp">${kv([['Direction',r.dir],['Host',r.host],['Path',r.path],['Size',r.size],['Duration',r.ms+' ms']])}</div>${r.ev?`<button class="pbtn" data-ev="${r.ev}">Open event #${r.ev} in inbox</button>`:S.set.cap?`<div class="gt">Response body (memory only)</div><div class="grp"><pre class="mono">{ "object": "page", "id": "40e9…", … }</pre></div>`:`<div style="font-size:12px;color:var(--text-muted);padding:0 6px 0 16px">Body not kept. <span class="lnk" data-goset="1">Turn on capture bodies in settings</span></div>`}`}
+const sw=(k,dis)=>`<div class="sw ${S.set[k]?'on':''} ${dis?'dis':''}" ${dis?'':`data-s="${k}"`}></div>`;
+const seg=(k,opts)=>`<span class="seg">${opts.map(o=>`<span class="${S.set[k]==o?'on':''}" data-seg="${k}|${o}">${o}</span>`).join('')}</span>`;
+const row=(t,d,c,tag)=>`<div class="set"><div style="flex:1;min-width:0"><div>${t}${tag?`<span class="tag">${tag}</span>`:''}</div>${d?`<div style="font-size:11px;color:var(--text-muted)">${d}</div>`:''}</div>${c}</div>`;
+const val=v=>`<span style="color:var(--text-secondary);font-size:12px" class="ell">${v}</span>`;
+function setp(){return back(S.prev||'home','Back')+`<div class="gt">At start</div><div class="grp">${row('Listener on at start','Off: start paused',sw('lisStart'))}${row('Open the widget at start','',sw('openStart'))}${row('Pin by default','Stays on top and does not hide',sw('pinStart'))}${row('Start with Windows','Needs the PC owner\'s OK first',sw('win',true),'later')}</div><div class="gt">Traffic</div><div class="grp">${row('Capture bodies','Memory only, secrets removed',sw('cap'))}${row('Entries to keep','',seg('keep',[200,500,1000]))}</div><div class="gt">Inbox</div><div class="grp">${row('Local store','Days to keep events',seg('ret',[1,7,30]))}</div><div class="gt">Appearance</div><div class="grp">${row('Theme','',seg('theme',['System','Light','Dark']))}${row('Notify on failed handlers','Windows notification',sw('notify',true),'later')}</div><div class="gt">About</div><div class="grp">${row('Consumer','',val('laptop-ura30pok'))}${row('Inbox','',val('inbox.mgcohen.workers.dev'))}${row('Store','',val('%LOCALAPPDATA%\\Runner'))}${row('Version','',val('0.1 prototype'))}</div><div style="height:6px"></div>`}
+function keep(i,k){const el=document.getElementById(i);if(!el)return;el.oninput=e=>{S[k]=e.target.value.toLowerCase();draw(true);const n=document.getElementById(i);n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
+function draw(ks){const sc=pg.scrollTop;hdr();const v=S.view;pg.innerHTML=v?(v[0]==='h'?hdet(v[1]):v[0]==='ev'?edet(v[1]):tdet(v[1])):S.page==='home'?home():S.page==='inbox'?inbox():S.page==='net'?net():setp();pg.scrollTop=ks?sc:0;keep('q','q');keep('iq','iq');keep('tq','tq');
+const p=document.getElementById('pop');const show=!v&&((S.fo==='in'&&S.page==='inbox')||(S.fo==='net'&&S.page==='net'));p.style.display=show?'':'none';if(show){const ps=p.querySelector('.pb')?.scrollTop||0;p.innerHTML=S.fo==='in'?popIn():popNet();p.querySelector('.pb').scrollTop=ps}
+const fb=document.getElementById('fb');if(fb)fb.onclick=()=>{S.fo=S.fo==='in'?false:'in';draw(true)};const tfb=document.getElementById('tfb');if(tfb)tfb.onclick=()=>{S.fo=S.fo==='net'?false:'net';draw(true)}}
+document.getElementById('lis').addEventListener('click',e=>{e.stopPropagation();S.lis=!S.lis;draw(true)});
+document.getElementById('pin').addEventListener('click',e=>{e.stopPropagation();S.pin=!S.pin;draw(true)});
+document.getElementById('gear').addEventListener('click',e=>{e.stopPropagation();if(S.page==='set'){S.page=S.prev||'home'}else{S.prev=S.page;S.page='set'}S.view=null;S.fo=false;draw()});
+document.querySelectorAll('.nav div').forEach(n=>n.onclick=()=>{S.page=n.dataset.p;S.view=null;S.fo=false;draw()});
+document.getElementById('pop').addEventListener('click',e=>{let t=e.target.closest('[data-g]');if(t){const s=F[t.dataset.g];s.has(t.dataset.v)?s.delete(t.dataset.v):s.add(t.dataset.v);return draw(true)}t=e.target.closest('[data-tg]');if(t){const s=TF[t.dataset.tg];s.has(t.dataset.v)?s.delete(t.dataset.v):s.add(t.dataset.v);return draw(true)}
+if(e.target.id==='clr'){(S.fo==='in'?[F.st,F.src,F.h]:[TF.dir,TF.kind,TF.res]).forEach(s=>s.clear());return draw(true)}if(e.target.id==='done'){S.fo=false;draw(true)}});
+pg.addEventListener('click',e=>{const q=s=>e.target.closest(s);let t;
+if(t=q('[data-rm]')){const [g,v]=t.dataset.rm.split('|');(F[g]||TF[g]).delete(v);return draw(true)}
+if(t=q('[data-t]')){e.stopPropagation();S.on[t.dataset.t]=!S.on[t.dataset.t];return draw(true)}
+if(t=q('[data-s]')){S.set[t.dataset.s]=!S.set[t.dataset.s];return draw(true)}
+if(t=q('[data-seg]')){const [k,v]=t.dataset.seg.split('|');S.set[k]=isNaN(v)?v:+v;return draw(true)}
+if(t=q('[data-fold]')){S.open[t.dataset.fold]=!S.open[t.dataset.fold];return draw(true)}
+if(q('[data-goset]')){S.view=null;S.prev='net';S.page='set';return draw()}
+if(t=q('[data-back]')){S.view=null;S.page=t.dataset.back;return draw()}
+if(t=q('[data-by]')){const [g,v]=t.dataset.by.split('|');S.view=null;S.page='inbox';F.st.clear();F.src.clear();F.h.clear();F[g].add(v);return draw()}
+if(t=q('[data-ev]')){S.page='inbox';S.fo=false;S.view=['ev',t.dataset.ev];return draw()}
+if(t=q('[data-tr]')){S.view=['tr',+t.dataset.tr];return draw()}
+if(t=q('[data-h]')){S.view=['h',t.dataset.h];return draw()}});
+const w=document.getElementById('w'),desk=document.getElementById('desk'),hdE=document.getElementById('hd');let d=null;
+hdE.addEventListener('pointerdown',e=>{if(e.target.closest('.sw,.ib'))return;d={x:e.clientX-w.offsetLeft,y:e.clientY-w.offsetTop};hdE.setPointerCapture(e.pointerId);hdE.style.cursor='grabbing'});
+hdE.addEventListener('pointermove',e=>{if(!d)return;w.style.left=Math.max(0,Math.min(desk.clientWidth-w.offsetWidth,e.clientX-d.x))+'px';w.style.top=Math.max(0,Math.min(desk.clientHeight-w.offsetHeight,e.clientY-d.y))+'px'});
+hdE.addEventListener('pointerup',()=>{d=null;hdE.style.cursor='grab'});
+draw();
+</script>
+</body>
+</html>

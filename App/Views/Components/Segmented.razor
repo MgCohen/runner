@@ -1,0 +1,18 @@
+@* A segmented control: one option on. *@
+<span class="seg" data-test="seg-@Test">
+    @foreach (var option in Options) {
+        <span class="@(string.Equals(option, Value, StringComparison.OrdinalIgnoreCase) ? "on" : "")" role="radio" tabindex="0"
+              aria-checked="@(string.Equals(option, Value, StringComparison.OrdinalIgnoreCase) ? "true" : "false")" data-test="opt-@option"
+              @onclick="() => OnSelect.InvokeAsync(option)" @onkeydown="@(e => e.Key is " " or "Enter" ? OnSelect.InvokeAsync(option) : Task.CompletedTask)">@option</span>
+    }
+</span>
+
+@code {
+    [Parameter] public IReadOnlyList<string> Options { get; set; } = [];
+
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public string? Test { get; set; }
+
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+}

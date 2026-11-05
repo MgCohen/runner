@@ -1,0 +1,17 @@
+@* A state badge: a tint background with the text in the same hue. *@
+<span class="badge" style="background:var(--bg-@Color);color:var(--text-@Color)" data-test="badge">@Text</span>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+
+    // accent, success, warning or danger.
+    [Parameter] public string Color { get; set; } = "accent";
+
+    // The color of an event state: new, pending, done or failed.
+    public static string OfState(string state) => state switch {
+        "done" => "success",
+        "pending" => "warning",
+        "failed" => "danger",
+        _ => "accent",
+    };
+}

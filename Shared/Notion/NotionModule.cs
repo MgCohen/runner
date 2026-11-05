@@ -1,0 +1,27 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Notion.Infrastructure;
+using VSA.Module;
+
+namespace Notion;
+
+// The Notion API client for the business modules. Settings: Modules:Notion.
+// The token comes from Modules:Notion:Token or the NOTION_API_TOKEN environment variable (op run), never from git.
+// Mock mode: a fake Notion with one task page. Nothing leaves the PC.
+public sealed class NotionModule : Module<NotionOptions> {
+    public override void Configure(ModuleBuilder module, NotionOptions settings) {
+        var services = module.Services;
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<PageCooldown>();
+        var mock = module.Configuration.GetValue<bool>("Runner:Mock");
+        services.AddSingleton(new NotionToken(mock ? "mock-token" : settings.Token is { Length: > 0 } token ? token : module.Configuration["NOTION_API_TOKEN"]));
+        if (mock) {
+            services.AddSingleton<MockNotion>();
+            services.AddHttpClient<INotionClient, NotionClient>(http => http.BaseAddress = MockNotion.BaseAddress)
+                .ConfigurePrimaryHttpMessageHandler(provider => new MockNotionHandler(provider.GetRequiredService<MockNotion>()));
+        } else {
+            services.AddHttpClient<INotionClient, NotionClient>(http => http.BaseAddress = new Uri(settings.BaseUrl));
+        }
+    }
+}

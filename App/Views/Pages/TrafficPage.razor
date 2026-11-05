@@ -1,0 +1,12 @@
+@page "/traffic"
+@implements IDisposable
+@inject Traffic.Presenters.TrafficPresenter Presenter
+
+<TrafficView Presenter="Presenter" />
+
+@code {
+    // New entries reload the list only while this page shows.
+    protected override void OnInitialized() => Presenter.Visible = true;
+
+    public void Dispose() => Presenter.Visible = false;
+}

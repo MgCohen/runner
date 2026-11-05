@@ -1,0 +1,35 @@
+@inherits PresenterComponent<Dispatch.Presenters.SourcesPresenter>
+
+<BackLink Href="" Label="Home" />
+@if (Presenter.Handler is { } h && h.Key == Key) {
+    <div class="dh">
+        <div class="dh-title ell">@h.Name</div>
+        <Switch On="h.On" OnToggle="() => Presenter.SetHandlerAsync(h.Key, !h.On)" Test="detail-switch" />
+    </div>
+    <div class="desc">@h.Description</div>
+    <div class="gt">Details</div>
+    <div class="grp">
+        <DetailRow Label="Source" Value="@h.Source" />
+        <DetailRow Label="Listens to" Value="@h.ListensTo"><span class="mono-inline">@h.ListensTo</span></DetailRow>
+        <DetailRow Label="Last" Value="@h.Last" />
+        <DetailRow Label="Events" Value="@Format.Count(h.Events)" />
+        <DetailRow Label="Failed" Value="@Format.Count(h.Failed)" />
+    </div>
+    <button class="pbtn" data-test="open-in-inbox" @onclick="OnOpenInbox">Open in inbox</button>
+}
+
+@code {
+    [Parameter] public string Key { get; set; } = "";
+
+    [Parameter] public EventCallback OnOpenInbox { get; set; }
+
+    string? opened;
+
+    protected override Task OnParametersSetAsync() {
+        if (opened == Key) {
+            return Task.CompletedTask;
+        }
+        opened = Key;
+        return Presenter.OpenHandlerAsync(Key);
+    }
+}

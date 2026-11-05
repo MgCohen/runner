@@ -1,0 +1,31 @@
+@inherits PresenterComponent<Listener.Presenters.ListenerPresenter>
+@inject IWidgetWindow Window
+
+@* Left to right: listener switch, title, subtitle, pin, settings, hide. A drag of the header moves the window;
+   the switch and the buttons do not start a drag. *@
+<header class="hd" @onmousedown="Drag" data-test="header">
+    <Switch On="Presenter.On" OnToggle="() => Presenter.ToggleAsync()" Title="Listener on or off" Test="listener-switch" />
+    <div class="hd-title">
+        <div class="title">Runner</div>
+        <div class="subtitle ell" data-test="subtitle">@Presenter.Subtitle</div>
+    </div>
+    <IconButton Icon="pin" Label="Pin on screen" On="Window.Pinned" OnClick="TogglePin" Test="pin" />
+    <IconButton Icon="settings" Label="Settings" On="SettingsOpen" OnClick="OnSettings" Test="settings" />
+    <IconButton Icon="x" Label="Hide" OnClick="() => Window.Hide()" Test="hide" />
+</header>
+
+@code {
+    [Parameter] public EventCallback OnSettings { get; set; }
+
+    [Parameter] public bool SettingsOpen { get; set; }
+
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
+
+    void TogglePin() => Window.SetPinned(!Window.Pinned);
+
+    void Drag(MouseEventArgs e) {
+        if (e.Button == 0) {
+            Window.BeginDrag();
+        }
+    }
+}

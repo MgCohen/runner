@@ -1,0 +1,77 @@
+<Solution>
+  <Folder Name="/App/">
+    <Project Path="App/Host/App.Host.csproj" />
+    <Project Path="App/Views/App.Views.csproj" />
+  </Folder>
+  <Folder Name="/Modules/">
+    <Project Path="Modules/Diagnostics/Diagnostics.csproj" />
+    <Project Path="Modules/Diagnostics/Projects/Diagnostics.Handlers.Events.csproj" />
+    <Project Path="Modules/Dispatch/Dispatch.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Contracts.Events.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Contracts.Requests.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Domain.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Handlers.Events.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Handlers.Requests.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Infrastructure.csproj" />
+    <Project Path="Modules/Dispatch/Projects/Dispatch.Presenters.csproj" />
+    <Project Path="Modules/Events/Events.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Contracts.Events.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Contracts.Requests.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Domain.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Handlers.Events.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Handlers.Requests.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Infrastructure.csproj" />
+    <Project Path="Modules/Events/Projects/Events.Presenters.csproj" />
+    <Project Path="Modules/Listener/Listener.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Contracts.Events.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Contracts.Requests.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Domain.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Handlers.Events.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Handlers.Requests.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Infrastructure.csproj" />
+    <Project Path="Modules/Listener/Projects/Listener.Presenters.csproj" />
+    <Project Path="Modules/MockHandlers/MockHandlers.csproj" />
+    <Project Path="Modules/MockHandlers/Projects/MockHandlers.Contracts.Requests.csproj" />
+    <Project Path="Modules/MockHandlers/Projects/MockHandlers.Domain.csproj" />
+    <Project Path="Modules/MockHandlers/Projects/MockHandlers.Handlers.Events.csproj" />
+    <Project Path="Modules/MockHandlers/Projects/MockHandlers.Handlers.Requests.csproj" />
+    <Project Path="Modules/MockHandlers/Projects/MockHandlers.Infrastructure.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Contracts.Events.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Contracts.Requests.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Domain.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Handlers.Requests.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Infrastructure.csproj" />
+    <Project Path="Modules/Settings/Projects/Settings.Presenters.csproj" />
+    <Project Path="Modules/Settings/Settings.csproj" />
+    <Project Path="Modules/Tasks/Projects/Tasks.Domain.csproj" />
+    <Project Path="Modules/Tasks/Projects/Tasks.Handlers.Events.csproj" />
+    <Project Path="Modules/Tasks/Projects/Tasks.Infrastructure.csproj" />
+    <Project Path="Modules/Tasks/Tasks.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Contracts.Events.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Contracts.Requests.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Handlers.Events.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Handlers.Requests.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Infrastructure.csproj" />
+    <Project Path="Modules/Traffic/Projects/Traffic.Presenters.csproj" />
+    <Project Path="Modules/Traffic/Traffic.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/AppSettings/AppSettings.csproj" />
+    <Project Path="Shared/AppSettings/Projects/AppSettings.Domain.csproj" />
+    <Project Path="Shared/Claude/Claude.csproj" />
+    <Project Path="Shared/Claude/Projects/Claude.Infrastructure.csproj" />
+    <Project Path="Shared/Handling/Handling.csproj" />
+    <Project Path="Shared/Handling/Projects/Handling.Contracts.Events.csproj" />
+    <Project Path="Shared/Handling/Projects/Handling.Domain.csproj" />
+    <Project Path="Shared/Handling/Projects/Handling.Handlers.Events.csproj" />
+    <Project Path="Shared/Handling/Projects/Handling.Infrastructure.csproj" />
+    <Project Path="Shared/Network/Network.csproj" />
+    <Project Path="Shared/Network/Projects/Network.Infrastructure.csproj" />
+    <Project Path="Shared/Notion/Notion.csproj" />
+    <Project Path="Shared/Notion/Projects/Notion.Domain.csproj" />
+    <Project Path="Shared/Notion/Projects/Notion.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/App.Tests.csproj" />
+  </Folder>
+</Solution>

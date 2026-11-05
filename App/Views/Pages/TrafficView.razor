@@ -1,0 +1,55 @@
+@inherits PresenterComponent<Traffic.Presenters.TrafficPresenter>
+@using Traffic.Presenters
+@inject NavigationManager Nav
+
+@* Traffic (C4): search, filter, chips, the summary line, the entry rows newest first, and "Load older entries". *@
+<SearchBar Placeholder="Search traffic" Value="@Presenter.Text" OnSearch="Presenter.SearchAsync" Count="Presenter.ActiveCount" Open="Presenter.PanelOpen"
+           OnFilter="() => Presenter.SetPanel(!Presenter.PanelOpen)" />
+<ActiveChips Items="Chips()" OnRemove="i => Presenter.RemoveAsync(i.Group, i.Value)" />
+@if (Presenter.Page is { } view) {
+    <div class="meta" data-test="summary">@view.Matching of @view.Kept kept · <span class="@(view.Errors > 0 ? "danger" : "")" data-test="errors">@view.Errors error@(view.Errors == 1 ? "" : "s")</span> · @Format.Kb(view.KbIn) KB in · @Format.Kb(view.KbOut) KB out</div>
+    @if (view.Entries.Count == 0) {
+        <div class="empty" data-test="empty">No traffic matches these filters</div>
+    }
+    @foreach (var r in view.Entries) {
+        <div class="ev" data-test="traffic-@r.Seq" @onclick="() => Nav.NavigateTo(TrafficDetail.Link(r.Seq))">
+            <span class="@(r.IsError ? "danger" : r.Direction == "in" ? "success" : "accent")"><Icon Name="@(r.Direction == "in" ? "arrow-down" : "arrow-up")" /></span>
+            <div class="grow ell">@r.Kind <span class="secondary">@r.Label</span></div>
+            <span class="small nowrap @(r.IsError ? "danger" : "muted")">@(r.IsError ? r.Status : r.Size) · @r.Ms ms</span>
+            <span class="muted"><Icon Name="chevron-right" /></span>
+        </div>
+    }
+    @if (view.HasMore) {
+        <div class="more"><span class="lnk" data-test="load-older" @onclick="Presenter.LoadOlderAsync">Load older entries</span></div>
+    }
+    @if (Presenter.PanelOpen) {
+        <FilterPanel OnClear="Presenter.ClearAsync" OnDone="() => Presenter.SetPanel(false)">
+            <div class="gl">Direction</div>
+            <Chip Label="in (received)" Value="in" On="@(Presenter.Selected(TrafficPresenter.DirectionGroup).Contains("in"))" Count="@(Presenter.FacetCount(TrafficPresenter.DirectionGroup, "in"))"
+                  OnClick="@(() => Presenter.ToggleAsync(TrafficPresenter.DirectionGroup, "in"))" />
+            <Chip Label="out (sent)" Value="out" On="@(Presenter.Selected(TrafficPresenter.DirectionGroup).Contains("out"))" Count="@(Presenter.FacetCount(TrafficPresenter.DirectionGroup, "out"))"
+                  OnClick="@(() => Presenter.ToggleAsync(TrafficPresenter.DirectionGroup, "out"))" />
+            <div class="gl">Kind</div>
+            @foreach (var kind in view.Kinds) {
+                <Chip Label="@kind" Value="@kind" On="Presenter.Selected(TrafficPresenter.KindGroup).Contains(kind)" Count="Presenter.FacetCount(TrafficPresenter.KindGroup, kind)"
+                      OnClick="() => Presenter.ToggleAsync(TrafficPresenter.KindGroup, kind)" />
+            }
+            <div class="gl">Result</div>
+            @foreach (var result in Results) {
+                <Chip Label="@result" Value="@result" On="Presenter.Selected(TrafficPresenter.ResultGroup).Contains(result)" Count="Presenter.FacetCount(TrafficPresenter.ResultGroup, result)"
+                      OnClick="() => Presenter.ToggleAsync(TrafficPresenter.ResultGroup, result)" />
+            }
+        </FilterPanel>
+    }
+}
+
+@code {
+    static readonly string[] Results = ["ok", "error"];
+
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
+
+    List<ActiveChips.Item> Chips() => [
+        .. new[] { TrafficPresenter.DirectionGroup, TrafficPresenter.KindGroup, TrafficPresenter.ResultGroup }
+            .SelectMany(g => Presenter.Selected(g).Select(v => new ActiveChips.Item(g, v, v))),
+    ];
+}

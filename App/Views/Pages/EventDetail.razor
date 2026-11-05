@@ -1,0 +1,10 @@
+@page "/inbox/{Id:long}"
+@inject Events.Presenters.InboxPresenter Presenter
+
+<EventDetailView Presenter="Presenter" Id="Id" />
+
+@code {
+    [Parameter] public long Id { get; set; }
+
+    public static string Link(long id) => $"inbox/{id}";
+}

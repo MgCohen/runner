@@ -1,0 +1,16 @@
+@* The active filters as chips, each with ×. *@
+@if (Items.Count > 0) {
+    <div class="chips" data-test="active-chips">
+        @foreach (var item in Items) {
+            <span class="ac">@item.Label<span class="ac-x" @onclick="() => OnRemove.InvokeAsync(item)"><Icon Name="x" Size="13" /></span></span>
+        }
+    </div>
+}
+
+@code {
+    public sealed record Item(string Group, string Value, string Label);
+
+    [Parameter] public IReadOnlyList<Item> Items { get; set; } = [];
+
+    [Parameter] public EventCallback<Item> OnRemove { get; set; }
+}

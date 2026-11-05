@@ -1,0 +1,47 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject Listener.Presenters.ListenerPresenter Listener
+@inject Settings.Presenters.SettingsPresenter Settings
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+
+<div class="widget">
+    <ListenerHeader Presenter="Listener" OnSettings="ToggleSettings" SettingsOpen="@IsSettings" />
+    <div class="page" id="page">
+        @Body
+    </div>
+    <nav class="nav">
+        <NavLink class="nav-item" href="" Match="NavLinkMatch.All" ActiveClass="act" data-test="nav-home"><Icon Name="home" Size="17" />Home</NavLink>
+        <NavLink class="nav-item" href="inbox" ActiveClass="act" data-test="nav-inbox"><Icon Name="inbox" Size="17" />Inbox</NavLink>
+        <NavLink class="nav-item" href="traffic" ActiveClass="act" data-test="nav-traffic"><Icon Name="arrows-exchange" Size="17" />Traffic</NavLink>
+    </nav>
+</div>
+<ThemeSync Presenter="Settings" />
+
+@code {
+    string previous = "";
+
+    bool IsSettings => Nav.ToBaseRelativePath(Nav.Uri).StartsWith("settings", StringComparison.Ordinal);
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    // A second click on the settings button returns to the page before.
+    void ToggleSettings() {
+        if (IsSettings) {
+            Nav.NavigateTo(previous);
+        } else {
+            previous = Nav.ToBaseRelativePath(Nav.Uri);
+            Nav.NavigateTo("settings");
+        }
+    }
+
+    async void OnLocationChanged(object? sender, LocationChangedEventArgs e) {
+        try {
+            await Js.InvokeVoidAsync("runner.scrollTop", "page");
+        } catch (JSDisconnectedException) {
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
