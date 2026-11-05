@@ -25,7 +25,7 @@ public static class RunnerApp {
         // The terminal shows the runner, not each request of the views.
         builder.Logging.AddFilter("Microsoft", LogLevel.Warning).AddFilter("System.Net.Http", LogLevel.Warning)
             .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information).AddFilter("FastEndpoints", LogLevel.Warning);
-        // A shortcut start has no terminal: the log also goes to <data folder>/runner.log.
+        // A shortcut start has no terminal: the log also goes to one file for each day in <data folder>/logs.
         builder.Services.AddSingleton<ILoggerProvider>(_ => new FileLogProvider(dataDir));
         // The module list of the build, not deps.json: the installed app is one file (ModuleList).
         builder.AddVsa(ModuleList.Create());

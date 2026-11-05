@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <!--
     The one process of the runner (T1): the VSA modules, Kestrel on 127.0.0.1, the tray icon and the widget window.
-    A Windows app: the desktop shortcut starts it with no terminal. The log goes to runner.log. The children
+    A Windows app: the desktop shortcut starts it with no terminal. The log goes to logs\runner-YYYY-MM-DD.log. The children
     (claude -p, op read) write to a visible console that the app opens while they run (VisibleConsole, T3).
     A start from a terminal (tray.ps1) uses the console of that terminal.
   -->

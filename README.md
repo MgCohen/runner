@@ -40,9 +40,9 @@ The app is not in `AppData`. A packaged app, for example the Claude desktop app,
 |---|---|
 | Tokens | Real mode: the app runs `op read` for each reference in `runner.secrets.env`. It needs `OP_SERVICE_ACCOUNT_TOKEN` in the user environment. |
 | `claude -p`, `op read` | The app opens a visible console window while they run, and closes it after (T3) |
-| Log | `runner.log` in the data folder. A start error goes to `%LOCALAPPDATA%\Runner\crash.log` and to a message box. |
+| Log | `logs\runner-YYYY-MM-DD.log` in the data folder, one file for each day. Each start adds to the file of the day. The app deletes a file after 14 days. A start error goes to `%LOCALAPPDATA%\Runner\crash.log` and to a message box. |
 | Mode | Real or mock. Change it in Settings → App → Mock mode, in the tray menu, or with the CLI. A change restarts the app. The app keeps the mode after a restart. |
-| Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `runner.log`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
+| Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `logs\`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
 
 The installed app is one file: `install.ps1` publishes with `PublishSingleFile`. The virus scanner examines each new DLL when a process loads it, and the source has more than 100 project DLLs. The bundle keeps each project as its own assembly inside `App.Host.exe`, so the scanner examines one file. The source, the tests and `tray.ps1` keep the projects. A one-file app has no `deps.json` that VSA module discovery can read, so the build records the module roots in `App.Host` (`ModuleList`). Then `install.ps1` copies only the files that changed and runs `App.Host.exe warmup`, so the scan occurs during the install. While the app starts, the tray shows a yellow Runner icon with the tooltip "Runner: starting". A click on it, or a second click on the shortcut, shows the start message.
 

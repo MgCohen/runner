@@ -53,7 +53,7 @@ public sealed class StartTests {
         await using var app = await TestApp.StartAsync(paused: true);
 
         Assert.That(app.Services.GetRequiredService<IAppMode>().Mock, Is.True);
-        Assert.That(File.Exists(Path.Combine(app.Folder, "runner.log")), Is.True);
+        Assert.That(Directory.EnumerateFiles(FileLogProvider.Folder(app.Folder), "runner-*.log"), Is.Not.Empty);
     }
 
     [Test]
