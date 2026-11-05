@@ -46,7 +46,10 @@ public sealed class TrayApp : ApplicationContext {
                 ToggleWidget();
             }
         };
-        tray.Changed += () => Ui(UpdateIcon);
+        tray.Changed += () => {
+            var state = tray.State;
+            Ui(() => UpdateIcon(state));
+        };
         _ = tray.StartAsync();
         if (openOnStart || start.SelfTest) {
             Form.ShowWidget();
@@ -62,7 +65,18 @@ public sealed class TrayApp : ApplicationContext {
 
     public void ShowWidget() => Ui(Form.ShowWidget);
 
+    readonly List<string> history = ["Paused"];
+
     public string IconState { get; private set; } = "Paused";
+
+    // Each icon state since start, with no repeats in a row (A29).
+    public IReadOnlyList<string> IconHistory {
+        get {
+            lock (history) {
+                return [.. history];
+            }
+        }
+    }
 
     public async Task ExitAsync() {
         if (exiting) {
@@ -100,8 +114,13 @@ public sealed class TrayApp : ApplicationContext {
         }
     }
 
-    void UpdateIcon() {
-        IconState = Colors.ContainsKey(tray.State) ? tray.State : "Paused";
+    void UpdateIcon(string state) {
+        IconState = Colors.ContainsKey(state) ? state : "Paused";
+        lock (history) {
+            if (history.Count == 0 || history[^1] != IconState) {
+                history.Add(IconState);
+            }
+        }
         icon.Icon = icons[IconState];
         var text = tray.Tooltip;
         icon.Text = text.Length > 63 ? text[..63] : text;

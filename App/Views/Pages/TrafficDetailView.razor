@@ -30,5 +30,13 @@
 @code {
     [Parameter] public long Seq { get; set; }
 
-    protected override Task OnInitializedAsync() => Presenter.OpenAsync(Seq);
+    long opened;
+
+    protected override Task OnParametersSetAsync() {
+        if (opened == Seq) {
+            return Task.CompletedTask;
+        }
+        opened = Seq;
+        return Presenter.OpenAsync(Seq);
+    }
 }

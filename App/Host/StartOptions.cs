@@ -10,7 +10,9 @@ public sealed record StartOptions(bool Mock, bool Paused, bool SelfTest, string?
                 data = args[i + 1];
             }
         }
-        return new StartOptions(args.Contains("--mock"), args.Contains("--paused"), args.Contains("--selftest"), data);
+        // The self-test starts paused (A1).
+        var selfTest = args.Contains("--selftest");
+        return new StartOptions(args.Contains("--mock"), args.Contains("--paused") || selfTest, selfTest, data);
     }
 
     // %LOCALAPPDATA%\Runner, or %LOCALAPPDATA%\Runner\mock in mock mode.

@@ -29,5 +29,13 @@
 @code {
     [Parameter] public long Id { get; set; }
 
-    protected override Task OnInitializedAsync() => Presenter.OpenAsync(Id);
+    long opened;
+
+    protected override Task OnParametersSetAsync() {
+        if (opened == Id) {
+            return Task.CompletedTask;
+        }
+        opened = Id;
+        return Presenter.OpenAsync(Id);
+    }
 }

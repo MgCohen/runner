@@ -23,5 +23,13 @@
 
     [Parameter] public EventCallback OnOpenInbox { get; set; }
 
-    protected override Task OnInitializedAsync() => Presenter.OpenHandlerAsync(Key);
+    string? opened;
+
+    protected override Task OnParametersSetAsync() {
+        if (opened == Key) {
+            return Task.CompletedTask;
+        }
+        opened = Key;
+        return Presenter.OpenHandlerAsync(Key);
+    }
 }

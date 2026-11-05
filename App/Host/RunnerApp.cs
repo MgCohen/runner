@@ -26,6 +26,9 @@ public static class RunnerApp {
         builder.Services.AddSingleton<WidgetWindow>();
         builder.Services.AddSingleton<IWidgetWindow>(provider => provider.GetRequiredService<WidgetWindow>());
         builder.Services.AddSingleton<TrayService>();
+        if (start.Mock) {
+            builder.Services.AddSingleton<SelfTestProbe>();
+        }
         configure?.Invoke(builder);
         var app = builder.Build();
         if (warning is not null) {

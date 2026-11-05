@@ -39,6 +39,13 @@ public sealed class ListenerPresenter(IBus bus) : Presenter(bus), IPresenterEven
 
     public Task SendMockAsync(string kind) => Run(Load, () => Bus.Send(new SendMockEventRequest(kind)));
 
+    // Mock mode: sends a custom event to the mock inbox, AgeDays ago, and returns its ID.
+    public async Task<long> SendMockEventAsync(string kind, string? source = null, string? type = null, string? action = null, double ageDays = 0) =>
+        (await Bus.Send(new SendMockEventRequest(kind, source, type, action, null, null, ageDays))).Id;
+
+    // Mock mode: sends a stored event again, as a duplicate delivery.
+    public Task SendAgainAsync(long id) => Bus.Send(new SendMockEventRequest("again", Again: id));
+
     public Task SetMockNetworkAsync(bool up) => Run(Load, () => Bus.Send(new SetMockNetworkRequest(up)));
 
     public async Task OnEventAsync(ListenerStateChanged integrationEvent, CancellationToken ct) {
