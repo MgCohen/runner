@@ -23,7 +23,7 @@ The repository is one VSA app ([MgCohen/vsa-template](https://github.com/MgCohen
 | `Shared/Network`, `Shared/AppSettings` | The traffic sink port; the settings parts of the modules |
 | `Shared/Notion`, `Shared/Claude` | The Notion client and the claude CLI, with their mocks |
 | `Tests` | NUnit: the VSA architecture rules, the event pipeline in mock mode, the helpers |
-| `vendor/vsa` | The VSA packages of vsa-template PR 32, before its release |
+| `vendor/vsa` | The VSA packages of vsa-template main (06daea4), before its release |
 
 ## Run
 

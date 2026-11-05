@@ -3,16 +3,13 @@ using Dispatch.Slices.ListSources;
 using Dispatch.Slices.SetHandler;
 using Dispatch.Slices.SetSource;
 using Dispatch.Slices.Common;
-using Events.Slices.Common;
-using Events.Slices.StoreEvent;
-using Listener.Slices.Listen;
 using VSA.Presenters;
 
 namespace Dispatch.Presenters;
 
 // Home and the handler detail page (C2). The fold state stays until the app exits.
 public sealed class SourcesPresenter(IBus bus) : Presenter(bus),
-    IPresenterEvent<SwitchChanged>, IPresenterEvent<EventStored>, IPresenterEvent<EventFinished>, IPresenterEvent<SourcesListed> {
+    IPresenterEvent<SwitchChanged>, IPresenterEvent<SourcesChanged> {
     readonly HashSet<string> open = new(StringComparer.OrdinalIgnoreCase);
     bool firstLoad = true;
 
@@ -79,11 +76,7 @@ public sealed class SourcesPresenter(IBus bus) : Presenter(bus),
 
     public Task OnEventAsync(SwitchChanged integrationEvent, CancellationToken ct) => Refresh();
 
-    public Task OnEventAsync(EventStored integrationEvent, CancellationToken ct) => Refresh();
-
-    public Task OnEventAsync(EventFinished integrationEvent, CancellationToken ct) => Refresh();
-
-    public Task OnEventAsync(SourcesListed integrationEvent, CancellationToken ct) => Refresh();
+    public Task OnEventAsync(SourcesChanged integrationEvent, CancellationToken ct) => Refresh();
 
     Task Refresh() => Run(Load, async () => {
         Sources = Map(await Bus.Send(new ListSourcesRequest()));

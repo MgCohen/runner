@@ -1,7 +1,6 @@
 using Listener.Presenters;
 using Microsoft.Extensions.DependencyInjection;
 using MockHandlers.Presenters;
-using VSA.Presenters;
 
 namespace App.Views;
 
@@ -12,17 +11,14 @@ public sealed class SelfTestProbe : IDisposable {
     readonly IServiceScope scope;
     readonly ListenerPresenter listener;
     readonly MockPresenter mocks;
-    readonly IDisposable live;
     readonly List<string> subtitles = [];
 
-    public SelfTestProbe(IServiceScopeFactory scopes, LivePresenters presenters) {
+    public SelfTestProbe(IServiceScopeFactory scopes) {
         ArgumentNullException.ThrowIfNull(scopes);
-        ArgumentNullException.ThrowIfNull(presenters);
         scope = scopes.CreateScope();
         listener = scope.ServiceProvider.GetRequiredService<ListenerPresenter>();
         mocks = scope.ServiceProvider.GetRequiredService<MockPresenter>();
         listener.Changed += OnChanged;
-        live = presenters.Add(listener);
         // The consumer name is in the subtitle.
         _ = listener.LoadAsync();
     }
@@ -51,7 +47,6 @@ public sealed class SelfTestProbe : IDisposable {
     public Task<IReadOnlyList<string>> RunsAsync() => mocks.RunsAsync();
 
     public void Dispose() {
-        live.Dispose();
         listener.Changed -= OnChanged;
         scope.Dispose();
     }
