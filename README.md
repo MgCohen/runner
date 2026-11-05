@@ -32,7 +32,9 @@ Install the runner once, and again after each code change:
 .\install.ps1
 ```
 
-`install.ps1` publishes `App.Host` to `%LOCALAPPDATA%\Runner\app` and adds a "Runner" shortcut to the desktop and to the Start menu. Start the runner with the shortcut. It opens in the tray, with no terminal.
+`install.ps1` publishes `App.Host` to `%USERPROFILE%\Apps\Runner` and adds a "Runner" shortcut to the desktop and to the Start menu. Start the runner with the shortcut. It opens in the tray, with no terminal.
+
+The app is not in `AppData`. A packaged app, for example the Claude desktop app, writes `AppData` to its own private folder, and Explorer does not see files there. If such an app runs `install.ps1`, the Start menu shortcut also goes to that private folder. The desktop shortcut works in all cases.
 
 | Item | How it works |
 |---|---|
@@ -42,14 +44,14 @@ Install the runner once, and again after each code change:
 | Mode | Real or mock. Change it in Settings → App → Mock mode, in the tray menu, or with the CLI. A change restarts the app. The app keeps the mode after a restart. |
 | Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `runner.log`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
 
-The first start after an install can take some seconds more, because the virus scanner examines the new files.
+The first start after an install can take some minutes, because the virus scanner examines the new files. The next starts take some seconds.
 
 ## CLI
 
 Commands go to the app that runs:
 
 ```powershell
-$runner = "$env:LOCALAPPDATA\Runner\app\App.Host.exe"
+$runner = "$env:USERPROFILE\Apps\Runner\App.Host.exe"
 & $runner status | Out-String     # real|mock, the listener state, the process ID, the data folder
 & $runner mode mock | Out-String  # saves the mode, restarts the app in it, and shows the new status
 & $runner mode real | Out-String
