@@ -10,6 +10,7 @@ namespace App.Host;
 public static class Secrets {
     public static IReadOnlyList<string> Load() {
         var problems = new List<string>();
+        RefreshPath();
         CopyUserVariable("OP_SERVICE_ACCOUNT_TOKEN", "OP_SERVICE_ACCOUNT_TOKEN");
         CopyUserVariable("Claude__WorkingDirectory", "Modules__Claude__WorkingDirectory");
         var file = Path.Combine(AppContext.BaseDirectory, "runner.secrets.env");
@@ -59,6 +60,24 @@ public static class Secrets {
         } catch (System.ComponentModel.Win32Exception e) {
             return (-1, "", $"op is not on the PATH ({e.Message})");
         }
+    }
+
+    // Explorer keeps the PATH of its own start, so a tool that was installed later (op, claude) is not on the PATH
+    // of a shortcut start. Add the saved machine and user PATH entries that the process does not have.
+    public static void RefreshPath() {
+        var current = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+        var known = new HashSet<string>(current.Select(Normal), StringComparer.OrdinalIgnoreCase);
+        foreach (var target in new[] { EnvironmentVariableTarget.Machine, EnvironmentVariableTarget.User }) {
+            var saved = Environment.GetEnvironmentVariable("PATH", target) ?? "";
+            foreach (var entry in Environment.ExpandEnvironmentVariables(saved).Split(';', StringSplitOptions.RemoveEmptyEntries)) {
+                if (known.Add(Normal(entry))) {
+                    current.Add(entry);
+                }
+            }
+        }
+        Environment.SetEnvironmentVariable("PATH", string.Join(';', current));
+
+        static string Normal(string entry) => entry.Trim().TrimEnd('\\');
     }
 
     static void CopyUserVariable(string userName, string processName) {

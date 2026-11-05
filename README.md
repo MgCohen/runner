@@ -44,7 +44,9 @@ The app is not in `AppData`. A packaged app, for example the Claude desktop app,
 | Mode | Real or mock. Change it in Settings → App → Mock mode, in the tray menu, or with the CLI. A change restarts the app. The app keeps the mode after a restart. |
 | Data | `%LOCALAPPDATA%\Runner` (mock mode: `…\Runner\mock`): `inbox.db`, `switches.json`, `settings.json`, `runner.log`, `WebView2\`. The mock self-test uses `%LOCALAPPDATA%\Runner\selftest-mock`. |
 
-The first start after an install can take some minutes, because the virus scanner examines the new files. The next starts take some seconds.
+The first start after an install can take some minutes, because the virus scanner examines the new files. The next starts take some seconds. While the app starts, the tray shows the Runner icon with the tooltip "Runner: starting". A second click on the shortcut shows the start message again.
+
+A shortcut start gets the PATH of Explorer, which can be older than the saved PATH. The app adds the saved machine and user PATH entries, so it finds `op` and `claude`.
 
 ## CLI
 

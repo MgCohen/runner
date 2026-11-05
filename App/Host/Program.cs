@@ -36,18 +36,23 @@ public static class Program {
         TrayApp? tray = null;
         AppMode? mode = null;
         bool? restartIn = null;
-        var instance = SingleInstance.TryStart(start.SelfTest, start.Restart, () => tray?.ShowWidget(), Command);
+        StartNotice? notice = null;
+        var instance = SingleInstance.TryStart(start.SelfTest, start.Restart, OnShow, Command);
         if (instance is null) {
             Console.WriteLine("The runner already runs. Its window comes to the front.");
             // A self-test that did not run is not a pass (A37).
             return start.SelfTest ? 1 : 0;
         }
-        // Each data folder has its own WebView2 profile: real mode, mock mode and the self-test do not share a cache.
-        Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(start.DataFolder, "WebView2"));
-        var problems = start.Mock ? [] : Secrets.Load();
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+        // The tray icon shows at once. The rest of the start can take minutes after an install (StartNotice).
+        if (!start.SelfTest) {
+            notice = StartNotice.Show();
+        }
+        // Each data folder has its own WebView2 profile: real mode, mock mode and the self-test do not share a cache.
+        Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(start.DataFolder, "WebView2"));
+        var problems = start.Mock ? [] : Secrets.Load();
         var app = RunnerApp.Build(start, builder => builder.Services.AddWindowsFormsBlazorWebView());
         foreach (var problem in problems) {
             app.Logger.LogWarning("{Problem}", problem);
@@ -55,6 +60,8 @@ public static class Program {
         app.Start();
         var config = app.Configuration;
         tray = new TrayApp(app, start, Flag(config, "Modules:Settings:openOnStart", true), Flag(config, "Modules:Settings:pinOnStart", false));
+        notice?.Dispose();
+        notice = null;
         mode = app.Services.GetRequiredService<AppMode>();
         if (!start.SelfTest) {
             mode.Restart = mock => {
@@ -83,6 +90,15 @@ public static class Program {
         return code;
 
         void Exit() => tray?.Form.BeginInvoke(async () => await tray.ExitAsync());
+
+        // A second start (shortcut) shows the widget, or the start message while the app starts.
+        void OnShow() {
+            if (tray is not null) {
+                tray.ShowWidget();
+            } else {
+                notice?.Remind();
+            }
+        }
 
         string Command(string command) {
             var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
