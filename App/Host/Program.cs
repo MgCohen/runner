@@ -58,8 +58,12 @@ public static class Program {
         Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", Path.Combine(start.DataFolder, "WebView2"));
         var problems = start.Mock ? [] : Secrets.Load();
         var app = RunnerApp.Build(start, builder => builder.Services.AddWindowsFormsBlazorWebView());
+        app.Logger.LogInformation("Start: {Mode} mode, data {Folder}", start.Mock ? "mock" : "real", start.DataFolder);
         foreach (var problem in problems) {
             app.Logger.LogWarning("{Problem}", problem);
+        }
+        if (!start.Mock && problems.Count == 0) {
+            app.Logger.LogInformation("op read: the tokens are read");
         }
         app.Start();
         var config = app.Configuration;

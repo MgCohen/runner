@@ -59,11 +59,19 @@ public abstract partial class InboxHandler(HandlerContext context) : Integration
     async Task Record(InboxEventDispatched dispatched, ResultKind kind, string? reason, long start, bool final) {
         var id = dispatched.Event.Id;
         var permanent = kind == ResultKind.Failed && final;
-        context.Store.Record(new HandlerResult(id, Key, kind, reason, context.Time.GetElapsedTime(start), dispatched.Attempt,
+        var duration = context.Time.GetElapsedTime(start);
+        // A skipped result (switch off) is not logged: it gives one line for each event.
+        if (kind != ResultKind.Skipped) {
+            Finished(Log, id, GetType().Name, kind, (long)duration.TotalMilliseconds, dispatched.Attempt, reason ?? "");
+        }
+        context.Store.Record(new HandlerResult(id, Key, kind, reason, duration, dispatched.Attempt,
             kind is ResultKind.Done or ResultKind.Skipped || permanent, context.Time.GetUtcNow()));
         // The token of the attempt can be canceled (exit), but the result must reach the Events module.
         await context.Events.PublishAsync(new HandlerResultRecorded(id, Key, kind.ToString().ToLowerInvariant(), permanent), CancellationToken.None);
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Event #{Id} → {Handler}: {Kind} in {Ms} ms, attempt {Attempt} {Reason}")]
+    static partial void Finished(ILogger logger, long id, string handler, ResultKind kind, long ms, int attempt, string reason);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Event {Id}: permanent failure")]
     static partial void PermanentFailure(ILogger logger, Exception e, long id);

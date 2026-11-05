@@ -130,15 +130,20 @@ public sealed partial class SocketListener(
     public async Task CatchUpAsync(CancellationToken ct) {
         try {
             long after = 0;
+            var count = 0;
             while (true) {
                 var page = await client.GetPendingAsync(after, ct);
                 foreach (var json in page) {
                     await PublishAsync(new InboxEventReceived(json.Deserialize<InboxEvent>()!), ct);
                 }
+                count += page.Count;
                 if (page.Count < InboxClient.PageSize) {
                     break;
                 }
                 after = page[^1].GetProperty("id").GetInt64();
+            }
+            if (count > 0) {
+                CatchUpDone(log, count);
             }
         } catch (Exception e) when (e is HttpRequestException or JsonException or TaskCanceledException && !ct.IsCancellationRequested) {
             CatchUpFailed(log, e.Message);
@@ -170,6 +175,7 @@ public sealed partial class SocketListener(
 
     async Task SetState(ListenerState state, string? reason) {
         if (status.Set(state, reason)) {
+            StateChanged(log, state, reason ?? "");
             await PublishAsync(new ListenerStateChanged(state.ToString(), reason), CancellationToken.None);
         }
     }
@@ -213,4 +219,10 @@ public sealed partial class SocketListener(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Catch-up failed: {Message}")]
     static partial void CatchUpFailed(ILogger logger, string message);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Listener: {State} {Reason}")]
+    static partial void StateChanged(ILogger logger, ListenerState state, string reason);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Catch-up: {Count} events from the inbox")]
+    static partial void CatchUpDone(ILogger logger, int count);
 }
