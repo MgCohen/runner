@@ -27,6 +27,7 @@ public sealed partial class AckService(InboxClient client, HandlingStore store, 
                 try {
                     await client.ConsumeAsync(batch, stoppingToken);
                     store.MarkAcked(batch);
+                    Acked(log, batch.Count, batch[^1]);
                     failures = 0;
                     continue;
                 } catch (Exception e) when (!stoppingToken.IsCancellationRequested) {
@@ -42,4 +43,7 @@ public sealed partial class AckService(InboxClient client, HandlingStore store, 
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Ack failed for {Count} events. Retry in {Delay}: {Message}")]
     static partial void AckFailed(ILogger logger, int count, TimeSpan delay, string message);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Ack: {Count} events, last #{Id}")]
+    static partial void Acked(ILogger logger, int count, long id);
 }
