@@ -29,17 +29,17 @@ public sealed class TrayApp : ApplicationContext {
         Form = new WidgetForm(app.Services, pinOnStart);
         app.Services.GetRequiredService<WidgetWindow>().Form = Form;
         icons = Colors.ToDictionary(c => c.Key, c => Dot(c.Value));
-        listenerItem = new ToolStripMenuItem("Listener on/off", null, async (_, _) => await tray.ToggleListenerAsync());
+        listenerItem = new ToolStripMenuItem("Listener on/off", null, (_, _) => Safe(tray.ToggleListenerAsync));
         var menu = new ContextMenuStrip();
         menu.Items.Add("Show", null, (_, _) => Form.ShowWidget());
         menu.Items.Add(listenerItem);
         if (start.Mock) {
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("Send mock task event", null, async (_, _) => await tray.SendMockAsync("task"));
-            menu.Items.Add("Send mock GitHub event", null, async (_, _) => await tray.SendMockAsync("github"));
+            menu.Items.Add("Send mock task event", null, (_, _) => Safe(() => tray.SendMockAsync("task")));
+            menu.Items.Add("Send mock GitHub event", null, (_, _) => Safe(() => tray.SendMockAsync("github")));
         }
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Exit", null, async (_, _) => await ExitAsync());
+        menu.Items.Add("Exit", null, (_, _) => Safe(ExitAsync));
         icon = new NotifyIcon { Icon = icons["Paused"], Text = "Runner", ContextMenuStrip = menu, Visible = true };
         icon.MouseClick += (_, e) => {
             if (e.Button == MouseButtons.Left) {
@@ -54,7 +54,7 @@ public sealed class TrayApp : ApplicationContext {
         if (openOnStart || start.SelfTest) {
             Form.ShowWidget();
         } else {
-            // The window handle exists, so the WebView starts and the tray service can marshal to the UI thread.
+            // The window handle exists, so the tray service can marshal to the UI thread. The page starts when the widget opens.
             _ = Form.Handle;
         }
     }
@@ -106,6 +106,15 @@ public sealed class TrayApp : ApplicationContext {
         base.Dispose(disposing);
     }
 
+    // A menu action: an error goes to the console, not to the UI thread.
+    static async void Safe(Func<Task> action) {
+        try {
+            await action();
+        } catch (Exception e) {
+            Console.Error.WriteLine($"Tray action failed: {e.Message}");
+        }
+    }
+
     void ToggleWidget() {
         if (Form.Visible) {
             Form.Hide();
@@ -128,6 +137,9 @@ public sealed class TrayApp : ApplicationContext {
     }
 
     void Ui(Action action) {
+        if (Form.IsDisposed || exiting) {
+            return;
+        }
         if (Form.IsHandleCreated && Form.InvokeRequired) {
             Form.BeginInvoke(action);
         } else {

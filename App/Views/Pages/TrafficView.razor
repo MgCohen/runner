@@ -1,5 +1,4 @@
 @inherits PresenterComponent<Traffic.Presenters.TrafficPresenter>
-@implements IDisposable
 @using Traffic.Presenters
 @inject NavigationManager Nav
 
@@ -47,15 +46,10 @@
 @code {
     static readonly string[] Results = ["ok", "error"];
 
-    protected override Task OnInitializedAsync() {
-        Presenter.Visible = true;
-        return Presenter.LoadAsync();
-    }
+    protected override Task OnInitializedAsync() => Presenter.LoadAsync();
 
     List<ActiveChips.Item> Chips() => [
         .. new[] { TrafficPresenter.DirectionGroup, TrafficPresenter.KindGroup, TrafficPresenter.ResultGroup }
             .SelectMany(g => Presenter.Selected(g).Select(v => new ActiveChips.Item(g, v, v))),
     ];
-
-    void IDisposable.Dispose() => Presenter.Visible = false;
 }

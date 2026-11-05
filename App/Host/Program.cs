@@ -11,7 +11,8 @@ public static class Program {
         using var instance = SingleInstance.TryStart(start.Mock, () => tray?.ShowWidget());
         if (instance is null) {
             Console.WriteLine("The runner already runs. Its window comes to the front.");
-            return 0;
+            // A self-test that did not run is not a pass (A37).
+            return start.SelfTest ? 1 : 0;
         }
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
@@ -20,13 +21,16 @@ public static class Program {
         app.Start();
         var config = app.Configuration;
         tray = new TrayApp(app, start, Flag(config, "Modules:Settings:openOnStart", true), Flag(config, "Modules:Settings:pinOnStart", false));
+        // Ctrl+C in the console stops the host: the app then exits as with Exit in the tray menu.
+        app.Lifetime.ApplicationStopping.Register(() => tray.Form.BeginInvoke(async () => await tray.ExitAsync()));
         if (start.SelfTest) {
             _ = SelfTest.RunAsync(tray, app);
         }
         Application.Run(tray);
         var code = tray.ExitCode;
         tray.Dispose();
-        ((IDisposable)app).Dispose();
+        // Off the UI thread: the UI message loop has ended, so a continuation there would never run.
+        Task.Run(() => app.DisposeAsync().AsTask()).GetAwaiter().GetResult();
         return code;
     }
 

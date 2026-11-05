@@ -103,8 +103,7 @@ public sealed class PipelineTests {
         var app = await TestApp.StartAsync();
         app.Mocks.SetDelay("MockSlow", TimeSpan.FromSeconds(30));
         var id = app.Send("slow");
-        await TestApp.Until(() => app.Store.Get(id) is not null, "stored");
-        await Task.Delay(500);
+        await TestApp.Until(() => app.Mocks.Starts("MockSlow") == 1, "the slow run started");
 
         await using var next = await app.RestartAsync();
 
@@ -119,8 +118,7 @@ public sealed class PipelineTests {
         var app = await TestApp.StartAsync();
         app.Mocks.SetDelay("MockSlow", TimeSpan.FromSeconds(30));
         var id = app.Send("slow");
-        await TestApp.Until(() => app.Store.Get(id) is not null, "stored");
-        await Task.Delay(500);
+        await TestApp.Until(() => app.Mocks.Starts("MockSlow") == 1, "the slow run started");
         var store = app.Store;
 
         await app.App.StopAsync();

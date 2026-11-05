@@ -48,11 +48,13 @@ public sealed class ListenerPresenter(IBus bus) : Presenter(bus), IPresenterEven
 
     public Task SetMockNetworkAsync(bool up) => Run(Load, () => Bus.Send(new SetMockNetworkRequest(up)));
 
-    public async Task OnEventAsync(ListenerStateChanged integrationEvent, CancellationToken ct) {
+    // The event gives the state: Paused means the switch is off.
+    public Task OnEventAsync(ListenerStateChanged integrationEvent, CancellationToken ct) {
         ArgumentNullException.ThrowIfNull(integrationEvent);
         State = integrationEvent.State;
         Reason = integrationEvent.Reason;
-        await LoadAsync();
+        On = State != "Paused";
+        return Task.CompletedTask;
     }
 
     void Apply(GetListenerStateResponse state) {

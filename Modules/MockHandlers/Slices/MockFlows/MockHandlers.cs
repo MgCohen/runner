@@ -63,6 +63,7 @@ sealed class MockSlow(HandlerContext context, MockControls controls) : InboxHand
     public override HandlerConfig Config { get; } = new() { Sources = ["mock"], Matches = [new Match("pair"), new Match("slow")], Description = "Mock: slow handler" };
 
     protected override async Task Run(InboxEvent e, CancellationToken ct) {
+        controls.Started(nameof(MockSlow));
         await Task.Delay(controls.DelayOf(nameof(MockSlow), TimeSpan.FromMilliseconds(100)), ct);
         controls.Ran(nameof(MockSlow), e.Id);
     }

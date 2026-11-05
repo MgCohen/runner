@@ -1,6 +1,7 @@
 @* A switch: off, on, disabled. 34 × 20 with a round knob. A click does not start a window drag. *@
-<div class="sw @(On ? "on" : "") @(Disabled ? "dis" : "")" role="switch" aria-checked="@(On ? "true" : "false")" title="@Title"
-     data-test="@Test" @onclick="Click" @onclick:stopPropagation="true" @onmousedown:stopPropagation="true"></div>
+<div class="sw @(On ? "on" : "") @(Disabled ? "dis" : "")" role="switch" aria-checked="@(On ? "true" : "false")" aria-disabled="@(Disabled ? "true" : "false")"
+     title="@Title" tabindex="@(Disabled ? -1 : 0)" data-test="@Test" @onclick="Click" @onclick:stopPropagation="true" @onmousedown:stopPropagation="true"
+     @onkeydown="Key" @onkeydown:stopPropagation="true"></div>
 
 @code {
     [Parameter] public bool On { get; set; }
@@ -14,4 +15,7 @@
     [Parameter] public EventCallback OnToggle { get; set; }
 
     Task Click() => Disabled ? Task.CompletedTask : OnToggle.InvokeAsync();
+
+    // Space or Enter toggles the switch, as a click does.
+    Task Key(KeyboardEventArgs e) => e.Key is " " or "Enter" ? Click() : Task.CompletedTask;
 }

@@ -13,12 +13,14 @@ namespace Events.Slices.RunHandlers;
 // A lane runs one item at a time, so a slow handler delays only its own lane. The listener switch pauses all lanes.
 // At exit the stopping token cancels the running handlers: their result is "cancelled" and the items stay pending.
 public sealed partial class HandlerLanes(HandlingStore store, HandlerCatalog catalog, HandlerSwitches switches, LaneSignal signal,
-    IServiceScopeFactory scopes, TimeProvider time, ILogger<HandlerLanes> log) : BackgroundService {
+    IServiceScopeFactory scopes, IHostApplicationLifetime lifetime, TimeProvider time, ILogger<HandlerLanes> log) : BackgroundService {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         void OnSwitch() => signal.WakeAll();
         switches.Changed += OnSwitch;
+        // Exit (spec 4.5): the running handlers are cancelled first, when the app starts to stop, before the other services.
+        using var exit = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, lifetime.ApplicationStopping);
         try {
-            await Task.WhenAll(catalog.All.Select(h => Task.Run(() => Lane(h.Key, stoppingToken), CancellationToken.None)));
+            await Task.WhenAll(catalog.All.Select(h => Task.Run(() => Lane(h.Key, exit.Token), CancellationToken.None)));
         } finally {
             switches.Changed -= OnSwitch;
         }

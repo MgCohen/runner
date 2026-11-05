@@ -1,8 +1,10 @@
+using System.Runtime.InteropServices;
+
 namespace App.Host;
 
 // One instance only (C6): a second start brings the first window to the front and exits.
 // Mock mode has its own instance, so a mock self-test can run next to the real app.
-public sealed class SingleInstance : IDisposable {
+public sealed partial class SingleInstance : IDisposable {
     readonly Mutex mutex;
     readonly EventWaitHandle show;
     readonly RegisteredWaitHandle? wait;
@@ -19,6 +21,8 @@ public sealed class SingleInstance : IDisposable {
         var mutex = new Mutex(initiallyOwned: true, $"Local\\{name}", out var created);
         var show = new EventWaitHandle(false, EventResetMode.AutoReset, $"Local\\{name}.Show");
         if (!created) {
+            // Windows lets only the foreground process give the foreground to another process.
+            _ = AllowSetForegroundWindow(AsfwAny);
             show.Set();
             mutex.Dispose();
             show.Dispose();
@@ -26,6 +30,12 @@ public sealed class SingleInstance : IDisposable {
         }
         return new SingleInstance(mutex, show, onShow);
     }
+
+    const int AsfwAny = -1;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool AllowSetForegroundWindow(int processId);
 
     public void Dispose() {
         wait?.Unregister(null);

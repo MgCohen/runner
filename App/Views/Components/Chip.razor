@@ -1,5 +1,6 @@
 @* A filter chip: off or on (accent), with its label and its count. *@
-<span class="ch @(On ? "on" : "")" data-test="chip-@Value" @onclick="OnClick">
+<span class="ch @(On ? "on" : "")" role="checkbox" aria-checked="@(On ? "true" : "false")" tabindex="0" data-test="chip-@Value" @onclick="OnClick"
+      @onkeydown="@(e => e.Key is " " or "Enter" ? OnClick.InvokeAsync() : Task.CompletedTask)">
     @if (Dot is { } dot) {
         <span class="dot" style="background:var(--text-@dot)"></span>
     }

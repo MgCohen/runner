@@ -15,6 +15,8 @@ public sealed partial class WidgetForm : Form {
 
     public WidgetForm(IServiceProvider services, bool pinned) {
         FormBorderStyle = FormBorderStyle.None;
+        MaximizeBox = false;
+        MinimizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
         TopMost = pinned;
@@ -47,6 +49,10 @@ public sealed partial class WidgetForm : Form {
     }
 
     public void BeginDrag() {
+        // The mouse event comes from the page after a round trip: after a fast click the button is up again.
+        if (MouseButtons != MouseButtons.Left) {
+            return;
+        }
         ReleaseCapture();
         _ = SendMessage(Handle, WmNcLButtonDown, HtCaption, 0);
         dragged = Location;
@@ -61,6 +67,14 @@ public sealed partial class WidgetForm : Form {
     protected override void OnDpiChanged(DpiChangedEventArgs e) {
         base.OnDpiChanged(e);
         Size = Scaled();
+    }
+
+    // No maximize from Win+Up or a drag to the top edge: the widget keeps its fixed size.
+    protected override void WndProc(ref Message m) {
+        if (m.Msg == WmSysCommand && ((int)m.WParam & 0xFFF0) == ScMaximize) {
+            return;
+        }
+        base.WndProc(ref m);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e) {
@@ -84,6 +98,8 @@ public sealed partial class WidgetForm : Form {
     }
 
     const int WmNcLButtonDown = 0xA1;
+    const int WmSysCommand = 0x112;
+    const int ScMaximize = 0xF030;
     const int HtCaption = 2;
     const int DwmwaWindowCornerPreference = 33;
     const int DwmwcpRound = 2;

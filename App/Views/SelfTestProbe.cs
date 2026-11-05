@@ -23,6 +23,8 @@ public sealed class SelfTestProbe : IDisposable {
         mocks = scope.ServiceProvider.GetRequiredService<MockPresenter>();
         listener.Changed += OnChanged;
         live = presenters.Add(listener);
+        // The consumer name is in the subtitle.
+        _ = listener.LoadAsync();
     }
 
     // The subtitles of the header, in order, with no repeats in a row.

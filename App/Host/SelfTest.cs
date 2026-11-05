@@ -165,7 +165,9 @@ public sealed class SelfTest {
             var second = await probe.SendAsync("mock", "pair");
             await UntilRuns(probe, $"MockSlow:{second}", 1);
             var runs = (await probe.RunsAsync()).ToList();
-            Expect(runs.IndexOf($"MockFast:{second}") < runs.IndexOf($"MockSlow:{first}"), string.Join(", ", runs));
+            var fast = runs.IndexOf($"MockFast:{second}");
+            var slow = runs.IndexOf($"MockSlow:{first}");
+            Expect(fast >= 0 && slow >= 0 && fast < slow, string.Join(", ", runs));
             await probe.SetDelayAsync("MockSlow", 100);
         });
         await Check("A36", "A duplicate of a done event: one event, nothing runs, and it is acked again", async () => {
@@ -289,9 +291,11 @@ public sealed class SelfTest {
         });
         await Check("A15", "Content that grows does not move an element sideways", async () => {
             await Click("[data-test=nav-inbox]");
+            await Type("[data-test=search]", "no such event");
+            await Until("rows().length === 0", "a short page");
             var before = await Js("document.querySelector('.bar').getBoundingClientRect().right");
-            await Click("[data-test=nav-home]");
-            await Click("[data-test=nav-inbox]");
+            await Type("[data-test=search]", "");
+            await Until("document.getElementById('page').scrollHeight > document.getElementById('page').clientHeight", "a long page with a scroll bar");
             Expect(await Js("getComputedStyle(document.getElementById('page')).scrollbarGutter") == "\"stable\"", "scrollbar-gutter: stable");
             Expect(await Js("document.querySelector('.bar').getBoundingClientRect().right") == before, "the search bar does not move");
         });

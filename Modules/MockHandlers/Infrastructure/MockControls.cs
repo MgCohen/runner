@@ -19,6 +19,13 @@ public sealed class MockControls {
 
     public int Runs(string handler) => runs.GetValueOrDefault(handler);
 
+    readonly ConcurrentDictionary<string, int> starts = new(StringComparer.Ordinal);
+
+    public void Started(string handler) => starts.AddOrUpdate(handler, 1, (_, n) => n + 1);
+
+    // The runs that started, also the ones that did not finish.
+    public int Starts(string handler) => starts.GetValueOrDefault(handler);
+
     // The finished runs, in order: handler name and event ID.
     public IReadOnlyList<(string Handler, long Event)> Order => [.. order];
 }

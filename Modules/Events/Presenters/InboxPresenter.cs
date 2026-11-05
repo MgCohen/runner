@@ -65,6 +65,7 @@ public sealed class InboxPresenter(IBus bus) : Presenter(bus),
     public Task LoadAsync() => Run(Load, async () => {
         var page = await Bus.Send(Query(null, PageSize));
         Apply(page);
+        HasMore = page.HasMore;
         events = [.. page.Events.Select(Map)];
         Loaded = true;
     });
@@ -75,6 +76,7 @@ public sealed class InboxPresenter(IBus bus) : Presenter(bus),
         }
         var page = await Bus.Send(Query(events[^1].Id, PageSize));
         Apply(page);
+        HasMore = page.HasMore;
         events.AddRange(page.Events.Select(Map).Where(e => events.All(x => x.Id != e.Id)));
     });
 
@@ -150,10 +152,10 @@ public sealed class InboxPresenter(IBus bus) : Presenter(bus),
     ListEventsRequest Query(long? before, int limit) =>
         new([.. filters[StateGroup]], [.. filters[SourceGroup]], [.. filters[HandlerGroup]], Text, before, limit);
 
+    // The counts and the filter values. HasMore changes only with the pages that the user loads.
     void Apply(ListEventsResponse page) {
         Matching = page.Matching;
         Total = page.Total;
-        HasMore = page.HasMore;
         Facets = page.Facets;
         SourceOptions = page.Sources;
         HandlerOptions = [.. page.Handlers.Select(h => new HandlerOptionView(h.Key, h.Name, h.Sources))];
