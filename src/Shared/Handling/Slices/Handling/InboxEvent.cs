@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Handling.Slices.Handling;
 
-// One event of the inbox Worker, in the shape of contract A (CONTRACTS.md). Id increases: it is the dedup key and the order key.
+// One event of the inbox Worker, in the shape of contract A (docs/CONTRACTS.md). Id increases: it is the dedup key and the order key.
 public sealed record InboxEvent {
     [JsonPropertyName("id")] public required long Id { get; init; }
     [JsonPropertyName("source")] public required string Source { get; init; }

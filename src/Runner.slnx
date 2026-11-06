@@ -71,7 +71,7 @@
     <Project Path="Shared/Notion/Projects/Notion.Domain.csproj" />
     <Project Path="Shared/Notion/Projects/Notion.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="Tests/App.Tests.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/App.Tests.csproj" />
   </Folder>
 </Solution>

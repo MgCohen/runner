@@ -1,5 +1,5 @@
 ﻿# Installs the runner as a desktop app. Run it once, and again after each code change.
-#   1. Publishes App/Host as one file (App.Host.exe) to %USERPROFILE%\Apps\Runner.
+#   1. Publishes src/App/Host as one file (App.Host.exe) to %USERPROFILE%\Apps\Runner.
 #   2. Stops the app, if it runs (App.Host.exe quit), and copies only the changed files.
 #   3. Runs App.Host.exe warmup one time, so the virus scan occurs now and not at the first start.
 #   4. Adds the "Runner" shortcut to the desktop and to the Start menu.
@@ -28,8 +28,15 @@ if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
 # each layer of each module (more than 100 DLLs). The bundle keeps each project as its own assembly inside
 # App.Host.exe, so the scanner examines one file. The source and the dev build (tray.ps1) keep the projects.
 # ContinuousIntegrationBuild: the bytes do not depend on the folder of the clone.
-dotnet publish (Join-Path $PSScriptRoot 'App\Host') -c Release -o $staging --nologo -v q -r win-x64 --self-contained false -p:PublishSingleFile=true -p:ContinuousIntegrationBuild=true
-if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed. The installed app did not change.' }
+# dotnet reads global.json from the current folder, so it runs in src.
+Push-Location (Join-Path $PSScriptRoot '..\src')
+try {
+    dotnet publish 'App\Host' -c Release -o $staging --nologo -v q -r win-x64 --self-contained false -p:PublishSingleFile=true -p:ContinuousIntegrationBuild=true
+    $code = $LASTEXITCODE
+} finally {
+    Pop-Location
+}
+if ($code -ne 0) { throw 'dotnet publish failed. The installed app did not change.' }
 
 # Stop the app that runs, from any folder: "quit" goes to the app on a named pipe and waits until it has stopped.
 # "quit" writes to stderr when the app does not run. Windows PowerShell 5.1 with 'Stop' makes that an error.
