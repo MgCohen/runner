@@ -21,7 +21,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- The op:// references of the tokens, not the tokens. Secrets reads them in real mode. -->
-    <None Include="../../deploy/runner.secrets.env" Link="runner.secrets.env" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="runner.secrets.env" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
